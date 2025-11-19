@@ -1,0 +1,2478 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dashboard Contrarreferência</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+body {
+font-family: 'Inter', sans-serif;
+background: #f1f5f9; /* Fundo Slate-100 (cinza-azulado claro) */
+color: #0f172a; /* Texto Slate-900 */
+min-height: 100vh;
+}
+/* O "glass-card" agora é um "dash-card" limpo e moderno */
+.dash-card {
+background: #ffffff;
+border: 1px solid #e2e8f0; /* Slate-200 */
+box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.05);
+border-radius: 1rem;
+transition: all 0.3s ease;
+position: relative; /* Para ancorar os botões */
+}
+.dash-card:hover {
+box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.07);
+}
+.loader {
+border: 4px solid rgba(0, 0, 0, 0.1);
+border-top: 4px solid #0d9488; /* Teal-700 */
+border-radius: 50%;
+width: 60px;
+height: 60px;
+animation: spin 1s linear infinite;
+}
+@keyframes spin {
+0% { transform: rotate(0deg); }
+100% { transform: rotate(360deg); }
+}
+/* Botões de filtro rápido - estilo "hospitalar" limpo */
+.quick-filter {
+display: inline-flex;
+align-items: center;
+gap: 0.45rem;
+background: #ffffff;
+border: 1px solid #cbd5e1; /* Slate-300 */
+color: #334155; /* Slate-700 */
+font-weight: 600;
+padding: 0.55rem 1rem;
+border-radius: 999px;
+transition: all 0.3s ease;
+box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.03);
+}
+.quick-filter:hover {
+transform: translateY(-2px);
+border-color: #94a3b8; /* Slate-400 */
+}
+.quick-filter.active {
+background: linear-gradient(135deg, #0d9488, #0284c7);
+color: #fff;
+border-color: transparent;
+box-shadow: 0 4px 15px 0 rgba(13, 148, 136, 0.25);
+}
+/* Chips de Status com cores novas */
+.status-chip {
+display: inline-flex;
+align-items: center;
+justify-content: center;
+min-width: 90px;
+padding: 0.25rem 0.75rem;
+border-radius: 999px;
+font-size: 0.75rem;
+font-weight: 600;
+letter-spacing: 0.02em;
+text-transform: uppercase;
+}
+/* Insight cards com novo estilo */
+.insight-card {
+background: linear-gradient(135deg, rgba(13, 148, 136, 0.05), rgba(2, 132, 199, 0.05));
+border: 1px solid rgba(13, 148, 136, 0.1);
+border-radius: 1rem;
+padding: 1rem;
+transition: all 0.3s ease;
+}
+.insight-card:hover {
+transform: translateY(-4px);
+box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+}
+/* Destaque superior do KPI com o novo gradiente */
+.kpi-card {
+position: relative;
+overflow: hidden;
+}
+.kpi-card::before {
+content: '';
+position: absolute;
+top: 0;
+left: 0;
+right: 0;
+height: 4px;
+background: linear-gradient(90deg, #0d9488, #0284c7); /* Teal-700 to Sky-600 */
+}
+.filter-panel {
+transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+max-height: 2000px;
+overflow: hidden;
+}
+.filter-panel.collapsed {
+max-height: 0;
+opacity: 0;
+margin-top: 0;
+margin-bottom: 0;
+}
+.chart-container {
+position: relative;
+height: 300px;
+width: 100%;
+}
+table {
+width: 100%;
+min-width: 980px;
+border-collapse: separate;
+border-spacing: 0;
+}
+thead th {
+position: sticky;
+top: 0;
+background: #f8fafc; /* Slate-50 */
+text-transform: uppercase;
+font-size: 0.75rem;
+letter-spacing: 0.04em;
+color: #0d9488; /* Teal-700 */
+}
+tbody tr:nth-child(even) {
+background: rgba(13, 148, 136, 0.03); /* Fundo de linha levemente teal */
+}
+tbody tr:hover {
+background: rgba(2, 132, 199, 0.07); /* Fundo de linha hover sky */
+}
+/* Gradiente de texto com as novas cores */
+.gradient-text {
+background: linear-gradient(90deg, #0d9488, #0284c7);
+-webkit-background-clip: text;
+background-clip: text;
+color: transparent;
+font-weight: 700;
+}
+/* Botões principais com o novo gradiente */
+.main-btn, .toggle-btn, .fab {
+background: linear-gradient(135deg, #0d9488, #0284c7); /* Teal-700 to Sky-600 */
+color: white;
+border: none;
+padding: 0.5rem 1rem;
+border-radius: 0.5rem;
+font-weight: 600;
+cursor: pointer;
+transition: all 0.3s ease;
+box-shadow: 0 4px 15px 0 rgba(13, 148, 136, 0.2);
+}
+.main-btn:hover, .toggle-btn:hover, .fab:hover {
+transform: translateY(-2px);
+box-shadow: 0 6px 20px 0 rgba(13, 148, 136, 0.3);
+}
+.fab {
+position: fixed;
+bottom: 2rem;
+right: 2rem;
+width: 56px;
+height: 56px;
+border-radius: 50%;
+display: flex;
+align-items: center;
+justify-content: center;
+z-index: 1000;
+padding: 0; /* Reset padding */
+}
+
+/* NOVO: Estilos do Botão de Info, Expandir e Tooltip (posicionados em baixo) */
+.info-btn, .expand-btn {
+position: absolute;
+bottom: 1rem; /* POSIÇÃO INFERIOR */
+width: 24px;
+height: 24px;
+background: #f1f5f9; /* slate-100 */
+color: #64748b; /* slate-500 */
+border: none;
+border-radius: 50%;
+font-weight: 700;
+font-size: 0.75rem; /* Tamanho do ícone */
+transition: all 0.2s ease;
+z-index: 10;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+.info-btn {
+right: 1rem;
+cursor: help;
+}
+.expand-btn {
+right: 3rem; /* Ao lado do info-btn */
+cursor: pointer;
+}
+.info-btn:hover, .expand-btn:hover {
+background: #0d9488; /* teal-700 */
+color: #ffffff;
+transform: scale(1.1);
+}
+.info-tooltip {
+display: none; /* Escondido por padrão */
+position: absolute;
+bottom: 2.5rem; /* ACIMA do botão */
+right: 1rem;
+width: 300px;
+background: #ffffff;
+border: 1px solid #e2e8f0; /* slate-200 */
+border-radius: 0.75rem;
+box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+padding: 1rem;
+z-index: 20;
+font-size: 0.875rem;
+color: #334155; /* slate-700 */
+line-height: 1.6;
+}
+/* Correção para o tooltip do quadrante, que pode ser mais largo */
+#quadrant-chart-tooltip {
+width: 380px;
+right: 1rem;
+}
+
+.info-btn:hover + .info-tooltip,
+.info-tooltip:hover {
+display: block;
+}
+.info-tooltip h5 {
+font-weight: 700;
+color: #0d9488; /* teal-700 */
+margin-bottom: 0.5rem;
+}
+.info-tooltip ul {
+list-style-position: inside;
+margin-top: 0.5rem;
+margin-bottom: 0.5rem;
+}
+.info-tooltip li {
+margin-bottom: 0.25rem;
+}
+
+
+/* Estilos do Modal de Gráfico */
+#chart-modal {
+transition: opacity 0.3s ease, visibility 0.3s ease;
+opacity: 0;
+visibility: hidden;
+}
+#chart-modal.show {
+opacity: 1;
+visibility: visible;
+}
+</style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+<div class="container mx-auto max-w-7xl">
+<!-- CABEÇALHO -->
+<div class="dash-card p-6 md:p-8 mb-8">
+<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+<div>
+<h1 class="text-4xl font-bold gradient-text mb-2">Dashboard Contrarreferência</h1>
+<p class="text-gray-600">
+Explore os dados, aplique filtros dinâmicos.
+</p>
+<p id="last-update" class="text-sm text-gray-500 mt-2"></p>
+</div>
+<button
+id="reload-btn"
+class="hidden main-btn px-6 py-3 rounded-xl font-semibold transition-all shadow-lg"
+>
+<i class="fas fa-sync-alt mr-2"></i>Recarregar
+</button>
+</div>
+</div>
+
+<!-- SEÇÃO DE INPUT DA URL -->
+<div id="url-input-section" class="dash-card p-8 mb-8">
+<h2 class="text-2xl font-bold gradient-text mb-2"><i class="fas fa-cog mr-2"></i>Configuração da fonte</h2>
+<p class="text-sm text-gray-500 mb-6">
+Cole a URL pública do Web App (Google Apps Script) responsável por expor a planilha de atendimentos.
+</p>
+<div class="flex flex-col md:flex-row gap-4 mb-4">
+<input
+type="text"
+id="sheet-url"
+placeholder="Cole a URL do Web App aqui..."
+class="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-teal-500 focus:outline-none transition-colors"
+value="https://script.google.com/macros/s/AKfycbw_Mkrf_drZMhH4L6tlxWz0gcpI--iW4WOVTpbsC2TOeHy6wybQWh2M8uG8tglnUIHhLQ/exec"
+/>
+<button
+id="load-btn"
+class="main-btn px-8 py-3 rounded-xl font-semibold transition-all shadow-lg"
+>
+<i class="fas fa-download mr-2"></i>Carregar dados
+</button>
+</div>
+<button
+id="debug-btn"
+class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-300 transition-all"
+>
+<i class="fas fa-tools mr-2"></i>Mostrar debug
+</button>
+<div id="debug-container" class="mt-4 hidden">
+<div
+id="debug-output"
+class="bg-gray-900 text-gray-100 rounded-lg p-4 text-xs font-mono max-h-60 overflow-y-auto"
+></div>
+</div>
+</div>
+
+<!-- ESTADOS DE LOADING E ERRO -->
+<div id="loading" class="dash-card p-12 text-center mb-8 hidden">
+<div class="loader mx-auto mb-4"></div>
+<p class="text-xl font-semibold text-gray-700">Carregando dados...</p>
+<p class="text-gray-500 mt-2">Um instante, por favor.</p>
+</div>
+
+<div id="error" class="dash-card p-8 text-center text-white mb-8 hidden" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+<div class="text-5xl mb-4"><i class="fas fa-exclamation-triangle"></i></div>
+<h2 class="text-2xl font-bold mb-4">Erro ao carregar</h2>
+<p id="error-message" class="text-lg mb-6 opacity-90"></p>
+<button onclick="location.reload()" class="bg-white text-red-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-all">
+<i class="fas fa-redo mr-2"></i>Tentar novamente
+</button>
+</div>
+
+<!-- CORPO DO DASHBOARD -->
+<div id="dashboard" class="hidden">
+<!-- PAINEL DE FILTROS -->
+<div class="dash-card p-6 mb-8">
+<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+<div>
+<h2 class="text-2xl font-bold gradient-text"><i class="fas fa-filter mr-2"></i>Filtros dinâmicos</h2>
+<p class="text-gray-600 text-sm mt-1">
+Ajuste o período, status, especialidades ou busque termos livres. Todos os gráficos e KPI são atualizados em tempo real.
+</p>
+</div>
+<button id="toggle-filters" class="toggle-btn">
+<i class="fas fa-chevron-up mr-2" id="toggle-icon"></i>Ocultar filtros
+</button>
+</div>
+
+<div id="filter-panel" class="filter-panel">
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+<div>
+<label for="filter-start-date" class="block text-sm font-semibold text-gray-600 mb-1">Início do período</label>
+<input type="date" id="filter-start-date" class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-teal-500 focus:outline-none transition-colors" />
+</div>
+<div>
+<label for="filter-end-date" class="block text-sm font-semibold text-gray-600 mb-1">Fim do período</label>
+<input type="date" id="filter-end-date" class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-teal-500 focus:outline-none transition-colors" />
+</div>
+<div class="md:col-span-2 xl:col-span-2">
+<label for="filter-search" class="block text-sm font-semibold text-gray-600 mb-1">Busca rápida</label>
+<input type="text" id="filter-search" placeholder="Paciente, médico, status, desfecho ou qualquer palavra-chave..." class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-teal-500 focus:outline-none transition-colors" />
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+<div>
+<label for="filter-status" class="block text-sm font-semibold text-gray-600 mb-2">Status (multisseleção)</label>
+<select id="filter-status" multiple class="w-full border-2 border-gray-300 rounded-lg focus:border-teal-500 focus:outline-none transition-colors bg-white text-sm h-40"></select>
+<p class="text-xs text-gray-500 mt-1">Use Ctrl ou Shift para combinar diferentes status.</p>
+</div>
+<div>
+<label for="filter-especialidade" class="block text-sm font-semibold text-gray-600 mb-2">Especialidade (multisseleção)</label>
+<select id="filter-especialidade" multiple class="w-full border-2 border-gray-300 rounded-lg focus:border-teal-500 focus:outline-none transition-colors bg-white text-sm h-40"></select>
+<p class="text-xs text-gray-500 mt-1">Combine com a busca livre para recortes mais específicos.</p>
+</div>
+</div>
+<div class="flex flex-wrap items-center gap-3 mt-6">
+<button id="quick-last-7" class="quick-filter"><i class="fas fa-clock mr-2"></i>Últimos 7 dias</button>
+<button id="quick-last-30" class="quick-filter"><i class="fas fa-calendar-alt mr-2"></i>Últimos 30 dias</button>
+<button id="quick-last-90" class="quick-filter"><i class="fas fa-chart-bar mr-2"></i>Últimos 90 dias</button>
+<button id="quick-current-trimester" class="quick-filter"><i class="fas fa-folder-open mr-2"></i>Trimestre recente</button>
+<div class="flex items-center gap-2 ml-auto">
+<button id="reset-filters" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:border-teal-500 hover:text-teal-600 transition"><i class="fas fa-times mr-2"></i>Limpar filtros</button>
+<button id="download-csv" class="px-4 py-2 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-semibold rounded-lg shadow hover:from-emerald-600 hover:to-cyan-600 transition"><i class="fas fa-file-csv mr-2"></i>Exportar CSV</button>
+</div>
+</div>
+<div id="filter-chips" class="flex flex-wrap gap-2 mt-4 text-sm text-gray-600"></div>
+</div>
+</div>
+
+<!-- KPIs (LINHA 1) -->
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+<div class="dash-card p-6 kpi-card">
+<h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Total</h3>
+<p id="kpi-total" class="text-4xl font-bold gradient-text mt-1">0</p>
+<p class="text-sm text-gray-500">Registros exibidos</p>
+<p class="text-xs text-gray-500 mt-3">Cobertura atual: <span id="kpi-total-percent">0%</span> da base carregada.</p>
+</div>
+<div class="dash-card p-6 kpi-card">
+<h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Média de dias pendentes</h3>
+<p id="kpi-avg" class="text-4xl font-bold text-teal-700 mt-1">0</p>
+<p class="text-sm text-gray-500">Tempo médio em aberto</p>
+</div>
+<div class="dash-card p-6 kpi-card">
+<h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Críticos</h3>
+<p id="kpi-criticos" class="text-4xl font-bold text-red-600 mt-1">0</p>
+<p class="text-sm text-gray-500">Entradas prioritárias</p>
+<p class="text-xs text-gray-500 mt-3">Equivale a <span id="kpi-criticos-percent">0%</span> dos filtrados.</p>
+</div>
+<div class="dash-card p-6 kpi-card">
+<h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Taxa de conclusão</h3>
+<p id="kpi-taxa" class="text-4xl font-bold text-blue-600 mt-1">0%</p>
+<p class="text-sm text-gray-500">Desfechos positivos vs total</p>
+</div>
+</div>
+
+<!-- KPIs (LINHA 2) -->
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-10">
+<div class="dash-card p-6 kpi-card">
+<h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Mediana de dias</h3>
+<p id="kpi-median" class="text-3xl font-bold gradient-text mt-1">0</p>
+<p class="text-sm text-gray-500">50% dos casos encerram abaixo</p>
+</div>
+<div class="dash-card p-6 kpi-card">
+<h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Maior tempo pendente</h3>
+<p id="kpi-max" class="text-3xl font-bold gradient-text mt-1">0</p>
+<p class="text-sm text-gray-500">Recorde no recorte atual</p>
+</div>
+<div class="dash-card p-6 kpi-card">
+<h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Tempo médio de conclusão</h3>
+<p id="kpi-conclusao" class="text-3xl font-bold text-teal-700 mt-1">0</p>
+<p class="text-sm text-gray-500">Entre abertura e finalização</p>
+</div>
+<!-- KPI de Duplicados removido pois agora são filtrados na origem -->
+<div class="dash-card p-6 kpi-card">
+<h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Base Carregada</h3>
+<p id="kpi-base-total" class="text-3xl font-bold gradient-text mt-1">0</p>
+<p class="text-sm text-gray-500">Total de registros (sem duplicados)</p>
+</div>
+</div>
+
+<!-- GRÁFICOS (Layout com 2 colunas) -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+<!-- Status -->
+<div class="dash-card p-6">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-xl font-bold gradient-text"><i class="fas fa-chart-pie mr-2"></i>Status dos atendimentos</h3>
+<span class="text-sm text-gray-500">Distribuição percentual</span>
+</div>
+<div class="chart-container">
+<canvas id="status-chart"></canvas>
+</div>
+<button class="expand-btn" aria-label="Ampliar gráfico"><i class="fas fa-expand"></i></button>
+<button class="info-btn" aria-label="Informações do gráfico"><i class="fas fa-info"></i></button>
+<div class="info-tooltip">
+<h5>Status dos Atendimentos</h5>
+<strong>O que mostra:</strong> A distribuição percentual de todos os atendimentos filtrados, agrupados pelo seu status atual (Ex: NORMAL, PENDENTE, CRÍTICO).
+<br/><br/>
+<strong>Extração:</strong> Contagem de cada item na coluna `STATUS`.
+</div>
+</div>
+<!-- Desfechos -->
+<div class="dash-card p-6">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-xl font-bold gradient-text"><i class="fas fa-tasks mr-2"></i>Desfechos</h3>
+<span class="text-sm text-gray-500">Principais resultados</span>
+</div>
+<div class="chart-container">
+<canvas id="desfecho-chart"></canvas>
+</div>
+<button class="expand-btn" aria-label="Ampliar gráfico"><i class="fas fa-expand"></i></button>
+<button class="info-btn" aria-label="Informações do gráfico"><i class="fas fa-info"></i></button>
+<div class="info-tooltip">
+<h5>Desfechos</h5>
+<strong>O que mostra:</strong> Os 10 principais resultados (desfechos) dos atendimentos, como 'ACEITO', 'CONCLUÍDO', 'NEGADO', etc. (Exclui 'DUPLICADO').
+<br/><br/>
+<strong>Extração:</strong> Contagem dos 10 itens mais comuns na coluna `DESFECHO`.
+</div>
+</div>
+<!-- Especialidades -->
+<div class="dash-card p-6">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-xl font-bold gradient-text"><i class="fas fa-stethoscope mr-2"></i>Top especialidades</h3>
+<span class="text-sm text-gray-500">Top 10 do período</span>
+</div>
+<div class="chart-container">
+<canvas id="especialidade-chart"></canvas>
+</div>
+<button class="expand-btn" aria-label="Ampliar gráfico"><i class="fas fa-expand"></i></button>
+<button class="info-btn" aria-label="Informações do gráfico"><i class="fas fa-info"></i></button>
+<div class="info-tooltip">
+<h5>Top Especialidades</h5>
+<strong>O que mostra:</strong> As 10 especialidades mais acionadas (com mais atendimentos) dentro do período e filtros selecionados.
+<br/><br/>
+<strong>Extração:</strong> Contagem dos 10 itens mais comuns na coluna `ESPECIALIDADE`.
+</div>
+</div>
+<!-- Pareto Médicos -->
+<div class="dash-card p-6">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-xl font-bold gradient-text"><i class="fas fa-user-md mr-2"></i>Pareto - médicos</h3>
+<span class="text-sm text-gray-500">Top 10 profissionais</span>
+</div>
+<div class="chart-container">
+<canvas id="pareto-chart"></canvas>
+</div>
+<button class="expand-btn" aria-label="Ampliar gráfico"><i class="fas fa-expand"></i></button>
+<button class="info-btn" aria-label="Informações do gráfico"><i class="fas fa-info"></i></button>
+<div class="info-tooltip">
+<h5>Pareto - Médicos</h5>
+<strong>O que mostra:</strong> Os 10 médicos com mais atendimentos (barras) e o percentual acumulado que eles representam do total (linha).
+<br/><br/>
+<strong>Extração:</strong> Contagem dos 10 itens mais comuns na coluna `MEDICO`.
+</div>
+</div>
+<!-- Evolução Diária -->
+<div class="dash-card p-6">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-xl font-bold gradient-text"><i class="fas fa-chart-line mr-2"></i>Evolução diária & Tendência</h3>
+<span class="text-sm text-gray-500">Atendimentos por data</span>
+</div>
+<div class="chart-container">
+<canvas id="timeline-chart"></canvas>
+</div>
+<button class="expand-btn" aria-label="Ampliar gráfico"><i class="fas fa-expand"></i></button>
+<button class="info-btn" aria-label="Informações do gráfico"><i class="fas fa-info"></i></button>
+<div class="info-tooltip">
+<h5>Evolução Diária & Tendência</h5>
+<strong>O que mostra:</strong> O volume de atendimentos abertos por dia. A linha pontilhada laranja mostra a tendência (regressão linear) de crescimento ou queda.
+<br/><br/>
+<strong>Extração:</strong> Contagem de atendimentos agrupados por `DATA_FECHAMENTO`.
+</div>
+</div>
+<!-- Distribuição Mensal -->
+<div class="dash-card p-6">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-xl font-bold gradient-text"><i class="fas fa-calendar-alt mr-2"></i>Distribuição mensal</h3>
+<span class="text-sm text-gray-500">Mês/ano</span>
+</div>
+<div class="chart-container">
+<canvas id="monthly-chart"></canvas>
+</div>
+<button class="expand-btn" aria-label="Ampliar gráfico"><i class="fas fa-expand"></i></button>
+<button class="info-btn" aria-label="Informações do gráfico"><i class="fas fa-info"></i></button>
+<div class="info-tooltip">
+<h5>Distribuição Mensal</h5>
+<strong>O que mostra:</strong> Contagem total de atendimentos agrupados por Mês/Ano, ordenados cronologicamente.
+<br/><br/>
+<strong>Extração:</strong> Contagem de atendimentos agrupados por `MES_ANO` (ou `DATA_FECHAMENTO` se `MES_ANO` falhar).
+</div>
+</div>
+
+<!-- Trimestre -->
+<div class="dash-card p-6">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-xl font-bold gradient-text"><i class="fas fa-calendar-check mr-2"></i>Por Trimestre</h3>
+<span class="text-sm text-gray-500">Distribuição trimestral</span>
+</div>
+<div class="chart-container">
+<canvas id="quarter-chart"></canvas>
+</div>
+<button class="expand-btn" aria-label="Ampliar gráfico"><i class="fas fa-expand"></i></button>
+<button class="info-btn" aria-label="Informações do gráfico"><i class="fas fa-info"></i></button>
+<div class="info-tooltip">
+<h5>Por Trimestre</h5>
+<strong>O que mostra:</strong> A distribuição dos atendimentos pelos trimestres (T1, T2, T3, T4) definidos na planilha.
+<br/><br/>
+<strong>Extração:</strong> Contagem de atendimentos agrupados pela coluna `TRIMESTRE`.
+</div>
+</div>
+<!-- Horário de Pico -->
+<div class="dash-card p-6">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-xl font-bold gradient-text"><i class="fas fa-clock mr-2"></i>Horário de Pico</h3>
+<span class="text-sm text-gray-500">Volume por hora do dia</span>
+</div>
+<div class="chart-container">
+<canvas id="hourly-chart"></canvas>
+</div>
+<button class="expand-btn" aria-label="Ampliar gráfico"><i class="fas fa-expand"></i></button>
+<button class="info-btn" aria-label="Informações do gráfico"><i class="fas fa-info"></i></button>
+<div class="info-tooltip">
+<h5>Horário de Pico</h5>
+<strong>O que mostra:</strong> O volume de atendimentos abertos em cada hora do dia (00:00 às 23:00), permitindo identificar os horários de maior demanda.
+<br/><br/>
+<strong>Extração:</strong> Contagem de atendimentos agrupados pelo componente "hora" da `HORA_FECHAMENTO`.
+</div>
+</div>
+<!-- Tempo de Conclusão -->
+<div class="dash-card p-6">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-xl font-bold gradient-text"><i class="fas fa-hourglass-half mr-2"></i>Tempo de Conclusão</h3>
+<span class="text-sm text-gray-500">Faixas de dias p/ finalizar</span>
+</div>
+<div class="chart-container">
+<canvas id="resolution-time-chart"></canvas>
+</div>
+<button class="expand-btn" aria-label="Ampliar gráfico"><i class="fas fa-expand"></i></button>
+<button class="info-btn" aria-label="Informações do gráfico"><i class="fas fa-info"></i></button>
+<div class="info-tooltip">
+<h5>Tempo de Conclusão</h5>
+<strong>O que mostra:</strong> O tempo (em dias) que os atendimentos *finalizados* levaram para serem concluídos, desde a abertura (`DATA_FECHAMENTO`) até a finalização (`DATA_FINALIZACAO`).
+<br/><br/>
+<strong>Extração:</strong> Cálculo de `DATA_FINALIZACAO` - `DATA_FECHAMENTO`, agrupado em faixas.
+</div>
+</div>
+
+<!-- Funil de Conversão -->
+<div class="dash-card p-6">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-xl font-bold gradient-text">
+<i class="fas fa-filter mr-2"></i>Funil de Status
+</h3>
+<span class="text-sm text-gray-500">Etapas principais</span>
+</div>
+<div class="chart-container" style="height: 300px;">
+<canvas id="funnel-chart"></canvas>
+</div>
+<button class="expand-btn" aria-label="Ampliar gráfico"><i class="fas fa-expand"></i></button>
+<button class="info-btn" aria-label="Informações do gráfico"><i class="fas fa-info"></i></button>
+<div class="info-tooltip">
+<h5>Funil de Status</h5>
+<strong>O que mostra:</strong> Simula um funil de conversão, mostrando a passagem dos atendimentos por etapas-chave.
+<br/><br/>
+<strong>Extração:</strong> Contagem de `Total` -> `STATUS = NORMAL` -> `DESFECHO = ACEITO` -> `DESFECHO = CONCLUÍDO/ALTA`.
+</div>
+</div>
+
+<!-- NOVO GRÁFICO: Dias Pendentes -->
+<div class="dash-card p-6">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-xl font-bold gradient-text">
+<i class="fas fa-calendar-times mr-2"></i>Distribuição de Dias Pendentes
+</h3>
+<span class="text-sm text-gray-500">Faixas de tempo em aberto</span>
+</div>
+<div class="chart-container" style="height: 300px;">
+<canvas id="pending-days-chart"></canvas>
+</div>
+<button class="expand-btn" aria-label="Ampliar gráfico"><i class="fas fa-expand"></i></button>
+<button class="info-btn" aria-label="Informações do gráfico"><i class="fas fa-info"></i></button>
+<div class="info-tooltip">
+<h5>Distribuição de Dias Pendentes</h5>
+<strong>O que mostra:</strong> Quantos atendimentos (do total filtrado) estão em aberto dentro de cada faixa de tempo.
+<br/><br/>
+<strong>Extração:</strong> Contagem de atendimentos agrupados por faixas da coluna `DIAS_PENDENTE`.
+</div>
+</div>
+
+<!-- NOVO GRÁFICO: Status por Especialidade -->
+<div class="dash-card p-6">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-xl font-bold gradient-text">
+<i class="fas fa-signal mr-2"></i>Status por Especialidade
+</h3>
+<span class="text-sm text-gray-500">Top 10 especialidades</span>
+</div>
+<div class="chart-container" style="height: 300px;">
+<canvas id="status-by-specialty-chart"></canvas>
+</div>
+<button class="expand-btn" aria-label="Ampliar gráfico"><i class="fas fa-expand"></i></button>
+<button class="info-btn" aria-label="Informações do gráfico"><i class="fas fa-info"></i></button>
+<div class="info-tooltip">
+<h5>Status por Especialidade</h5>
+<strong>O que mostra:</strong> A composição de status (Crítico, Normal, etc.) para as 10 especialidades com mais atendimentos.
+<br/><br/>
+<strong>Extração:</strong> Contagem de `STATUS` agrupada pelo Top 10 de `ESPECIALIDADE`.
+</div>
+</div>
+
+<!-- Quadrante Especialidades -->
+<div class="dash-card p-6 lg:col-span-2">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-xl font-bold gradient-text">
+<i class="fas fa-bullseye mr-2"></i>Análise de Quadrante: Volume vs Efetividade
+</h3>
+<span class="text-sm text-gray-500">Por especialidade (mín. 5 casos)</span>
+</div>
+<div class="chart-container" style="height: 400px;">
+<canvas id="quadrant-chart"></canvas>
+</div>
+<button class="expand-btn" aria-label="Ampliar gráfico"><i class="fas fa-expand"></i></button>
+<button class="info-btn" aria-label="Informações do gráfico"><i class="fas fa-info"></i></button>
+<!-- [INÍCIO DA ALTERAÇÃO] Tooltip do quadrante com explicação detalhada -->
+<div class="info-tooltip" id="quadrant-chart-tooltip">
+<h5>Análise de Quadrante</h5>
+<p class="mb-2"><strong>O que mostra:</strong> Uma matriz 2x2 que posiciona cada especialidade (com mín. 5 casos) com base em seu <strong>Volume de Atendimentos (Eixo X)</strong> e sua <strong>Taxa de Efetividade (Eixo Y)</strong>.</p>
+<ul class="list-disc list-inside space-y-1 text-sm mb-2">
+<li><strong>Eixo X (Volume):</strong> Total de atendimentos. Mais à direita, maior o volume.</li>
+<li><strong>Eixo Y (Efetividade):</strong> % de desfechos positivos (Aceito, Concluído, Alta, etc). Mais acima, maior a efetividade.</li>
+<li><strong>Tamanho da Bolha:</strong> Representa o volume total.</li>
+</ul>
+<strong>Interpretando os Quadrantes:</strong>
+<ul class="list-none space-y-1 mt-1 text-sm">
+<li><strong style="color: #22c55e;">Superior Direito (Verde):</strong> <br/><em>Alto Volume, Alta Efetividade.</em><br/>São as especialidades "Carro-Chefe". Performam bem e lidam com alta demanda. Manter a excelência.</li>
+<li><strong style="color: #14b8a6;">Superior Esquerdo (Verde-azulado):</strong> <br/><em>Baixo Volume, Alta Efetividade.</em><br/>Especialidades de "Nicho". São eficientes, mas pouco acionadas. Ótima performance.</li>
+<li><strong style="color: #f59e0b;">Inferior Direito (Laranja):</strong> <br/><em>Alto Volume, Baixa Efetividade.</em><br/><strong>Ponto de Atenção Crítico.</strong> Muita demanda, mas baixa taxa de sucesso. Investigar gargalos, processos ou recursos.</li>
+<li><strong style="color: #ef4444;">Inferior Esquerdo (Vermelho):</strong> <br/><em>Baixo Volume, Baixa Efetividade.</em><br/>"Problemáticos". Baixa demanda e baixa performance. Analisar se os processos estão corretos ou se há problemas específicos.</li>
+</ul>
+</div>
+<!-- [FIM DA ALTERAÇÃO] -->
+
+<!-- [INÍCIO DA ALTERAÇÃO] Legenda do quadrante com novas cores e nomes -->
+<div class="mt-4 text-xs text-gray-500">
+<p><strong>Eixo X:</strong> Volume de atendimentos | <strong>Eixo Y:</strong> Taxa de sucesso (%)</p>
+<ul class="flex flex-wrap gap-x-4 gap-y-1 mt-2">
+<li class="flex items-center"><span class="w-3 h-3 rounded-full mr-1.5" style="background: #22c55e"></span>Alta Efet./Alto Vol. (Carro-chefe)</li>
+<li class="flex items-center"><span class="w-3 h-3 rounded-full mr-1.5" style="background: #f59e0b"></span>Baixa Efet./Alto Vol. (Atenção)</li>
+<li class="flex items-center"><span class="w-3 h-3 rounded-full mr-1.5" style="background: #14b8a6"></span>Alta Efet./Baixo Vol. (Nicho)</li>
+<li class="flex items-center"><span class="w-3 h-3 rounded-full mr-1.5" style="background: #ef4444"></span>Baixa Efet./Baixo Vol. (Problema)</li>
+</ul>
+</div>
+<!-- [FIM DA ALTERAÇÃO] -->
+</div>
+
+</div>
+
+<!-- INSIGHTS E TABELA -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
+<div class="dash-card p-6 lg:col-span-1">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-xl font-bold gradient-text"><i class="fas fa-lightbulb mr-2"></i>Insights automáticos</h3>
+<span class="text-sm text-gray-500">Resumo</span>
+</div>
+<div id="insight-container" class="space-y-4">
+<p class="text-sm text-gray-500">Carregue os dados para visualizar os principais destaques.</p>
+</div>
+</div>
+<div class="dash-card p-6 lg:col-span-2">
+<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-4">
+<div>
+<h3 class="text-xl font-bold gradient-text"><i class="fas fa-table mr-2"></i>Registros filtrados</h3>
+<p class="text-sm text-gray-500">Tabela completa com informações essenciais.</p>
+</div>
+<span id="table-count" class="text-sm font-semibold text-teal-700 bg-teal-50 px-3 py-1 rounded-full">0 registros</span>
+</div>
+
+<input
+type="text"
+id="table-search"
+placeholder="Buscar na tabela (refina os registros já filtrados)..."
+class="mb-3 px-4 py-2 w-full border-2 border-gray-300 rounded-lg focus:border-teal-500 focus:outline-none transition-colors"
+/>
+
+<div class="overflow-x-auto max-h-96 border border-gray-200 rounded-xl">
+<table>
+<thead>
+<tr>
+<th class="px-4 py-3 text-left">Atendimento</th>
+<th class="px-4 py-3 text-left">Paciente</th>
+<th class="px-4 py-3 text-left">Especialidade</th>
+<th class="px-4 py-3 text-left">Médico</th>
+<th class="px-4 py-3 text-left">Status</th>
+<th class="px-4 py-3 text-left">Desfecho</th>
+<th class="px-4 py-3 text-left">Data fechamento</th>
+<th class="px-4 py-3 text-left">Data finalização</th>
+<th class="px-4 py-3 text-left">Dias pendentes</th>
+<th class="px-4 py-3 text-left">Observações</th>
+</tr>
+</thead>
+<tbody id="detail-table-body"></tbody>
+</table>
+</div>
+<p class="text-xs text-gray-500 mt-3">
+Dica: filtre por período e exporte o CSV para consolidar indicadores em relatórios ou BI.
+</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Botão Flutuante para Topo -->
+<div class="fab" id="fab-scroll-top" style="display: none;">
+<i class="fas fa-arrow-up"></i>
+</div>
+
+<!-- Modal para Gráfico Ampliado -->
+<div id="chart-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[2000] hidden items-center justify-center p-4" onclick="closeChartModal()">
+<div class="dash-card w-full max-w-5xl h-[80vh] p-6" onclick="event.stopPropagation()">
+<div class="flex justify-between items-center mb-4">
+<h3 id="modal-chart-title" class="text-2xl font-bold gradient-text">Gráfico Ampliado</h3>
+<button onclick="closeChartModal()" class="text-gray-500 hover:text-red-600 transition-colors text-2xl" aria-label="Fechar modal">&times;</button>
+</div>
+<div class="chart-container" style="height: calc(80vh - 100px);">
+<canvas id="modal-chart-canvas"></canvas>
+</div>
+</div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+
+<script>
+const state = {
+raw: [],
+filtered: [],
+charts: {
+modalChart: null // Referência para o gráfico no modal
+},
+filters: { start: '', end: '', statuses: [], especialidades: [], search: '' },
+meta: { statuses: [], especialidades: [], bounds: { min: null, max: null }, fetchedAt: null },
+quick: null,
+filterTimeout: null // <-- ADICIONAR ESTA LINHA
+};
+
+// Paleta de cores "hospitalar"
+const chartPalette = [
+'#14b8a6', // Teal-500 [0] (Usado para Alta Efet./Baixo Vol.)
+'#0284c7', // Sky-600 [1]
+'#0e7490', // Cyan-700 [2]
+'#22c55e', // Green-500 [3] (Usado para Alta Efet./Alto Vol.)
+'#f59e0b', // Amber-500 [4] (Usado para Baixa Efet./Alto Vol.)
+'#ef4444', // Red-500 [5] (Usado para Baixa Efet./Baixo Vol.)
+'#6b7280', // Gray-500 [6]
+'#3b82f6' // Blue-500 [7]
+];
+
+// Cores específicas para Status (para gráfico empilhado)
+const statusColors = {
+'CRÍTICO': '#ef4444', // Red-500
+'ATENÇÃO': '#f59e0b', // Amber-500
+'PENDENTE': '#3b82f6', // Blue-500
+'NORMAL': '#0d9488', // Teal-700
+'CONCLUÍDO': '#059669', // Green-600
+'OUTRO': '#6b7280' // Gray-500
+};
+
+const UI = {};
+
+// --- UTILITIES ---
+function hexToRgba(hex, alpha) {
+const r = parseInt(hex.slice(1, 3), 16);
+const g = parseInt(hex.slice(3, 5), 16);
+const b = parseInt(hex.slice(5, 7), 16);
+return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+assignDomRefs();
+registerEvents();
+// Verifica se a URL padrão está preenchida e carrega
+if (UI.url?.value.trim()) loadDashboard();
+});
+
+function assignDomRefs() {
+UI.load = document.getElementById('load-btn');
+UI.reload = document.getElementById('reload-btn');
+UI.url = document.getElementById('sheet-url');
+UI.loading = document.getElementById('loading');
+UI.error = document.getElementById('error');
+UI.errorMessage = document.getElementById('error-message');
+UI.dashboard = document.getElementById('dashboard');
+UI.urlSection = document.getElementById('url-input-section');
+UI.debugBtn = document.getElementById('debug-btn');
+UI.debugBox = document.getElementById('debug-container');
+UI.debugOutput = document.getElementById('debug-output');
+UI.lastUpdate = document.getElementById('last-update');
+UI.filterStart = document.getElementById('filter-start-date');
+UI.filterEnd = document.getElementById('filter-end-date');
+UI.filterStatus = document.getElementById('filter-status');
+UI.filterEspecialidade = document.getElementById('filter-especialidade');
+UI.filterSearch = document.getElementById('filter-search');
+UI.filterChips = document.getElementById('filter-chips');
+UI.resetFilters = document.getElementById('reset-filters');
+UI.downloadCsv = document.getElementById('download-csv');
+UI.tableBody = document.getElementById('detail-table-body');
+UI.tableCount = document.getElementById('table-count');
+UI.tableSearch = document.getElementById('table-search');
+UI.insights = document.getElementById('insight-container');
+UI.quickButtons = [
+document.getElementById('quick-last-7'),
+document.getElementById('quick-last-30'),
+document.getElementById('quick-last-90'),
+document.getElementById('quick-current-trimester')
+].filter(Boolean);
+UI.toggleFilters = document.getElementById('toggle-filters');
+UI.filterPanel = document.getElementById('filter-panel');
+UI.toggleIcon = document.getElementById('toggle-icon');
+UI.fabScrollTop = document.getElementById('fab-scroll-top');
+// Modal
+UI.chartModal = document.getElementById('chart-modal');
+UI.modalChartTitle = document.getElementById('modal-chart-title');
+UI.modalChartCanvas = document.getElementById('modal-chart-canvas');
+}
+
+function registerEvents() {
+UI.load?.addEventListener('click', loadDashboard);
+UI.reload?.addEventListener('click', loadDashboard);
+UI.debugBtn?.addEventListener('click', () => {
+if (!UI.debugBox) return;
+UI.debugBox.classList.toggle('hidden');
+});
+
+UI.filterStart?.addEventListener('change', (event) => {
+state.filters.start = event.target.value;
+clearQuickSelection();
+applyFilters();
+});
+
+UI.filterEnd?.addEventListener('change', (event) => {
+state.filters.end = event.target.value;
+clearQuickSelection();
+applyFilters();
+});
+
+UI.filterSearch?.addEventListener('input', (event) => {
+state.filters.search = event.target.value.trim().toLowerCase();
+clearTimeout(state.filterTimeout);
+state.filterTimeout = setTimeout(() => applyFilters(), 300);
+});
+
+UI.filterStatus?.addEventListener('change', () => {
+state.filters.statuses = Array.from(UI.filterStatus.selectedOptions).map((option) => option.value);
+clearQuickSelection();
+applyFilters();
+});
+
+UI.filterEspecialidade?.addEventListener('change', () => {
+state.filters.especialidades = Array.from(UI.filterEspecialidade.selectedOptions).map((option) => option.value);
+clearQuickSelection();
+applyFilters();
+});
+
+UI.quickButtons.forEach((button) => {
+button.addEventListener('click', () => applyQuickFilter(button.id));
+});
+
+UI.resetFilters?.addEventListener('click', () => {
+resetFilters();
+applyFilters();
+log('Filtros redefinidos.');
+});
+
+UI.downloadCsv?.addEventListener('click', exportCsv);
+
+UI.toggleFilters?.addEventListener('click', () => {
+UI.filterPanel.classList.toggle('collapsed');
+const isCollapsed = UI.filterPanel.classList.contains('collapsed');
+UI.toggleIcon.className = isCollapsed ? 'fas fa-chevron-down mr-2' : 'fas fa-chevron-up mr-2';
+UI.toggleFilters.innerHTML = (isCollapsed ? '<i class="fas fa-chevron-down mr-2" id="toggle-icon"></i>Mostrar filtros' : '<i class="fas fa-chevron-up mr-2" id="toggle-icon"></i>Ocultar filtros');
+});
+
+UI.fabScrollTop?.addEventListener('click', () => {
+window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+window.addEventListener('scroll', () => {
+if (window.scrollY > 300) {
+UI.fabScrollTop.style.display = 'flex';
+} else {
+UI.fabScrollTop.style.display = 'none';
+}
+});
+
+UI.tableSearch?.addEventListener('input', (e) => {
+const term = e.target.value.toLowerCase();
+if (!term) {
+renderTable(state.filtered);
+return;
+}
+const filteredForTable = state.filtered.filter(row =>
+Object.values(row).some(val =>
+String(val).toLowerCase().includes(term)
+)
+);
+renderTable(filteredForTable);
+});
+
+// Evento para fechar modal ao pressionar 'Escape'
+window.addEventListener('keydown', (e) => {
+if (e.key === 'Escape' && UI.chartModal.classList.contains('show')) {
+closeChartModal();
+}
+});
+}
+
+// --- Funções do Modal ---
+function openChartModal(chartInstance, title) {
+if (!chartInstance) return;
+
+if (state.charts.modalChart) {
+state.charts.modalChart.destroy();
+}
+
+UI.modalChartTitle.textContent = title;
+const config = chartInstance.config;
+// Desabilitar aspect ratio no modal para preencher o espaço
+const modalOptions = JSON.parse(JSON.stringify(config.options)); // Deep clone
+modalOptions.maintainAspectRatio = false;
+
+state.charts.modalChart = new Chart(UI.modalChartCanvas, {
+type: config.type,
+data: config.data,
+options: modalOptions
+});
+
+UI.chartModal.classList.remove('hidden');
+setTimeout(() => UI.chartModal.classList.add('show'), 10); // Para transição
+}
+
+function closeChartModal() {
+UI.chartModal.classList.remove('show');
+setTimeout(() => {
+UI.chartModal.classList.add('hidden');
+if (state.charts.modalChart) {
+state.charts.modalChart.destroy();
+state.charts.modalChart = null;
+}
+}, 300); // Aguarda a transição
+}
+
+// --- Carregamento e Processamento de Dados ---
+function loadDashboard() {
+const url = UI.url?.value.trim();
+if (!url) {
+alert('Informe uma URL válida.');
+return;
+}
+
+clearDebug();
+log('Iniciando requisição para o endpoint informado.');
+
+UI.loading?.classList.remove('hidden');
+UI.urlSection?.classList.add('hidden');
+UI.error?.classList.add('hidden');
+UI.dashboard?.classList.add('hidden');
+
+fetch(url)
+.then((response) => {
+if (!response.ok) throw new Error(`HTTP ${response.status} - ${response.statusText}`);
+return response.json();
+})
+.then((data) => {
+if (!Array.isArray(data) || !data.length) throw new Error('Resposta vazia ou inválida.');
+log(`Dados recebidos: ${data.length} linhas.`);
+const processed = processData(data);
+setupDashboard(processed);
+UI.loading?.classList.add('hidden');
+UI.dashboard?.classList.remove('hidden');
+UI.reload?.classList.remove('hidden');
+log('Dashboard atualizado com sucesso.');
+})
+.catch((error) => {
+UI.loading?.classList.add('hidden');
+UI.error?.classList.remove('hidden');
+UI.urlSection?.classList.remove('hidden');
+if (UI.errorMessage) UI.errorMessage.textContent = error.message;
+log(`Erro: ${error.message}`);
+});
+}
+
+function processData(data) {
+const rows = data
+.map((row, index) => {
+const desfecho = (row.DESFECHO || 'N/A').toString().trim().toUpperCase();
+// PULAR LINHAS COM DESFECHO "DUPLICADO"
+if (desfecho.includes('DUPLICADO')) return null;
+
+const dataFechamento = parseDate(row.DATA_FECHAMENTO);
+const dataFinalizacao = parseDate(row.DATA_FINALIZACAO);
+let tempoConclusao = null;
+
+if (dataFechamento && dataFinalizacao) {
+const diff = dataFinalizacao.getTime() - dataFechamento.getTime();
+if (diff >= 0) {
+tempoConclusao = diff / (1000 * 60 * 60 * 24);
+}
+}
+
+return {
+ATENDIMENTO: (row.ATENDIMENTO || `AT${index + 1}`).toString().trim(),
+RG: (row.RG || '').toString().trim(),
+NOME_PACIENTE: (row.NOME_PACIENTE || 'N/A').toString().trim(),
+DATA_FECHAMENTO: dataFechamento,
+DATA_FECHAMENTO_RAW: row.DATA_FECHAMENTO || '',
+HORA_FECHAMENTO_RAW: (row.HORA_FECHAMENTO || '').toString().trim(),
+HORA: parseTime(row.HORA_FECHAMENTO),
+MEDICO: (row.MEDICO || 'N/A').toString().trim(),
+ESPECIALIDADE: (row.ESPECIALIDADE || 'N/A').toString().trim(),
+DATA_FINALIZACAO: dataFinalizacao,
+DATA_FINALIZACAO_RAW: row.DATA_FINALIZACAO || '',
+DESFECHO: desfecho, // Já está em maiúsculo
+MES_ANO: (row.MES_ANO || '').toString().trim(),
+TRIMESTRE: (row.TRIMESTRE || 'N/A').toString().trim(),
+DIAS_PENDENTE: Number(row.DIAS_PENDENTE) || 0,
+STATUS: (row.STATUS || 'N/A').toString().trim().toUpperCase(),
+OBSERVACOES: (row.OBSERVACOES || '').toString().trim(),
+TEMPO_CONCLUSAO: tempoConclusao
+};
+})
+.filter(Boolean); // Remove os nulos (duplicados)
+
+const statuses = Array.from(new Set(rows.map((row) => row.STATUS).filter(Boolean))).sort();
+const especialidades = Array.from(new Set(rows.map((row) => row.ESPECIALIDADE).filter(Boolean))).sort((a, b) =>
+a.localeCompare(b, 'pt-BR')
+);
+
+const dates = rows
+.map((row) => row.DATA_FECHAMENTO)
+.filter((date) => date instanceof Date && !Number.isNaN(date.getTime()));
+
+return {
+rows,
+statuses,
+especialidades,
+bounds: {
+min: dates.length ? new Date(Math.min(...dates)) : null,
+max: dates.length ? new Date(Math.max(...dates)) : null
+}
+};
+}
+
+// --- Setup e Filtros ---
+function setupDashboard(info) {
+state.raw = info.rows;
+state.filtered = info.rows.slice();
+state.meta.statuses = info.statuses;
+state.meta.especialidades = info.especialidades;
+state.meta.bounds = info.bounds;
+state.meta.fetchedAt = new Date();
+
+populateFilters();
+resetFilters();
+applyFilters(true);
+updateLastUpdate();
+}
+
+function populateFilters() {
+if (UI.filterStatus) {
+UI.filterStatus.innerHTML = state.meta.statuses
+.map((status) => `<option value="${escapeHtml(status)}">${escapeHtml(status)}</option>`)
+.join('');
+}
+if (UI.filterEspecialidade) {
+UI.filterEspecialidade.innerHTML = state.meta.especialidades
+.map((esp) => `<option value="${escapeHtml(esp)}">${escapeHtml(esp)}</option>`)
+.join('');
+}
+}
+
+function resetFilters() {
+state.filters = { start: '', end: '', statuses: [], especialidades: [], search: '' };
+state.quick = null;
+if (UI.filterStart) UI.filterStart.value = '';
+if (UI.filterEnd) UI.filterEnd.value = '';
+if (UI.filterSearch) UI.filterSearch.value = '';
+if (UI.tableSearch) UI.tableSearch.value = '';
+if (UI.filterStatus) Array.from(UI.filterStatus.options).forEach((option) => (option.selected = false));
+if (UI.filterEspecialidade)
+Array.from(UI.filterEspecialidade.options).forEach((option) => (option.selected = false));
+updateQuickButtons();
+updateFilterChips();
+}
+
+function applyQuickFilter(id) {
+if (!state.raw.length) return;
+// REMOVIDO: Não usar mais bounds.max para data fim, pois pega datas futuras da planilha
+// const bounds = state.meta.bounds;
+// if (!bounds.max) return;
+
+state.quick = id;
+
+// ALTERADO: Agora a base é SEMPRE a data de HOJE
+let end = new Date();
+let start = null;
+
+if (id === 'quick-last-7') {
+start = shiftDays(end, 7); // Ajustado para 7 dias exatos
+} else if (id === 'quick-last-30') {
+start = shiftDays(end, 30);
+} else if (id === 'quick-last-90') {
+start = shiftDays(end, 90);
+} else if (id === 'quick-current-trimester') {
+const latestTrimester = state.raw
+.map(r => r.TRIMESTRE)
+.filter(t => t && t !== 'N/A')
+.sort()
+.pop();
+
+if (latestTrimester) {
+const sameTrimester = state.raw.filter(
+(row) => row.TRIMESTRE === latestTrimester && row.DATA_FECHAMENTO instanceof Date
+);
+if (sameTrimester.length) {
+start = new Date(Math.min(...sameTrimester.map((row) => row.DATA_FECHAMENTO)));
+// Para o trimestre, mantemos o end como o máximo do trimestre OU hoje, o que for menor para não ir pro futuro
+const maxTrimesterDate = new Date(Math.max(...sameTrimester.map((row) => row.DATA_FECHAMENTO)));
+end = maxTrimesterDate > end ? end : maxTrimesterDate;
+}
+}
+// Fallback se não encontrar o trimestre
+if (!start) {
+start = shiftDays(end, 89);
+}
+}
+
+if (start && end) {
+if (UI.filterStart) UI.filterStart.value = toInputDate(start);
+if (UI.filterEnd) UI.filterEnd.value = toInputDate(end);
+state.filters.start = toInputDate(start);
+state.filters.end = toInputDate(end);
+}
+
+updateQuickButtons();
+applyFilters();
+log(`Filtro rápido aplicado: ${id}. Base: ${toInputDate(end)}`);
+}
+
+function updateQuickButtons() {
+UI.quickButtons.forEach((button) => {
+button.classList.toggle('active', button.id === state.quick);
+});
+}
+
+function clearQuickSelection() {
+state.quick = null;
+updateQuickButtons();
+}
+
+function applyFilters(silent = false) {
+if (!state.raw.length) return;
+const { start, end, statuses, especialidades, search } = state.filters;
+let rows = state.raw.slice();
+
+if (start) {
+const startDate = new Date(`${start}T00:00:00`);
+rows = rows.filter((row) => !row.DATA_FECHAMENTO || row.DATA_FECHAMENTO >= startDate);
+}
+
+if (end) {
+const endDate = new Date(`${end}T23:59:59`);
+rows = rows.filter((row) => !row.DATA_FECHAMENTO || row.DATA_FECHAMENTO <= endDate);
+}
+
+if (statuses.length) rows = rows.filter((row) => statuses.includes(row.STATUS));
+if (especialidades.length) rows = rows.filter((row) => especialidades.includes(row.ESPECIALIDADE));
+if (search) {
+rows = rows.filter((row) => {
+const text = [
+row.ATENDIMENTO,
+row.NOME_PACIENTE,
+row.MEDICO,
+row.ESPECIALIDADE,
+row.DESFECHO,
+row.STATUS,
+row.OBSERVACOES
+]
+.join(' ')
+.toLowerCase();
+return text.includes(search);
+});
+}
+
+state.filtered = rows;
+if (UI.tableSearch) UI.tableSearch.value = '';
+updateFilterChips();
+updateDashboard();
+if (!silent) log(`Filtros aplicados: ${rows.length} de ${state.raw.length} registros.`);
+}
+
+// --- Atualização do Dashboard ---
+function updateDashboard() {
+const metrics = computeMetrics(state.filtered);
+renderKPIs(metrics);
+renderCharts(metrics);
+renderInsights(metrics);
+renderTable(state.filtered);
+updateLastUpdate();
+}
+
+function computeMetrics(rows) {
+const total = rows.length;
+const diasPendentes = rows.map((row) => row.DIAS_PENDENTE || 0);
+const tempoConclusao = rows
+.map((row) => row.TEMPO_CONCLUSAO)
+.filter((value) => Number.isFinite(value) && value >= 0);
+
+const totalDias = diasPendentes.reduce((sum, value) => sum + value, 0);
+const avg = total ? totalDias / total : 0;
+const median = diasPendentes.length ? medianValue(diasPendentes) : 0;
+const maxDias = diasPendentes.length ? Math.max(...diasPendentes) : 0;
+const tempoMedioConclusao = tempoConclusao.length
+? tempoConclusao.reduce((sum, value) => sum + value, 0) / tempoConclusao.length
+: 0;
+
+const criticos = rows.filter((row) => {
+const s = normalize(row.STATUS);
+return s.includes('crit') || s.includes('aten');
+}).length;
+
+const concluidos = rows.filter((row) =>
+['CONCLUIDO', 'CONCLUÍDO', 'FECHADO', 'ALTA', 'ACEITO', 'CDR', 'OBITO', 'ÓBITO', 'AGENDADO'].some((term) =>
+row.DESFECHO.includes(term)
+)
+).length;
+
+return {
+kpis: {
+total,
+avg,
+median,
+maxDias,
+criticos,
+taxaConclusao: total ? (concluidos / total) * 100 : 0,
+tempoMedioConclusao
+},
+statusData: aggregate(rows, 'STATUS'),
+desfechoData: aggregate(rows, 'DESFECHO', 10),
+especialidadeData: aggregate(rows, 'ESPECIALIDADE', 10),
+medicoData: aggregate(rows, 'MEDICO', 10),
+timelineData: aggregateTimeline(rows),
+monthlyData: aggregateMonthly(rows),
+quarterData: aggregateQuarterly(rows),
+hourlyData: aggregateHourly(rows),
+resolutionTimeData: aggregateResolutionTime(rows),
+funnelData: aggregateFunnel(rows),
+pendingDaysData: aggregatePendingDays(rows), // NOVO
+statusBySpecialtyData: aggregateStatusBySpecialty(rows) // NOVO
+};
+}
+
+function renderKPIs(metrics) {
+const totalBase = state.raw.length || 1;
+setText('kpi-total', formatNumber(metrics.kpis.total));
+setText('kpi-total-percent', formatPercent(metrics.kpis.total, totalBase));
+setText('kpi-avg', formatDecimal(metrics.kpis.avg));
+setText('kpi-criticos', formatNumber(metrics.kpis.criticos));
+setText('kpi-criticos-percent', formatPercent(metrics.kpis.criticos, metrics.kpis.total || 1));
+setText('kpi-taxa', `${formatDecimal(metrics.kpis.taxaConclusao)}%`);
+setText('kpi-median', formatDecimal(metrics.kpis.median));
+setText('kpi-max', `${formatNumber(metrics.kpis.maxDias)} dias`);
+setText('kpi-conclusao', formatDuration(metrics.kpis.tempoMedioConclusao));
+setText('kpi-base-total', formatNumber(state.raw.length)); // NOVO
+}
+
+function renderCharts(metrics) {
+destroyCharts();
+state.charts.status = createDoughnut('status-chart', metrics.statusData, chartPalette);
+state.charts.desfecho = createBar('desfecho-chart', metrics.desfechoData, chartPalette);
+state.charts.especialidade = createBar('especialidade-chart', metrics.especialidadeData, [chartPalette[0]], 'y');
+state.charts.pareto = createPareto('pareto-chart', metrics.medicoData);
+
+const trendData = calculateLinearRegression(metrics.timelineData);
+state.charts.timeline = createTimeline('timeline-chart', metrics.timelineData, trendData);
+
+state.charts.monthly = createBar('monthly-chart', metrics.monthlyData, [chartPalette[2]]);
+state.charts.quarter = createDoughnut('quarter-chart', metrics.quarterData, chartPalette.slice(0, 6));
+state.charts.hourly = createLineChart('hourly-chart', metrics.hourlyData, chartPalette[1]);
+state.charts.resolutionTime = createBar('resolution-time-chart', metrics.resolutionTimeData, [chartPalette[3]], 'x');
+state.charts.funnel = createBar('funnel-chart', metrics.funnelData, chartPalette.slice(0, 4), 'y');
+
+// NOVOS GRÁFICOS
+state.charts.pendingDays = createBar('pending-days-chart', metrics.pendingDaysData, [chartPalette[4]], 'x');
+state.charts.statusBySpecialty = createStackedBar('status-by-specialty-chart', metrics.statusBySpecialtyData);
+
+const quadrantData = aggregateSpecialtyQuadrant(state.filtered);
+state.charts.quadrant = createQuadrantChart('quadrant-chart', quadrantData);
+
+// Anexar eventos de expandir
+findAndAttachExpand('status-chart', 'status', 'Status dos atendimentos');
+findAndAttachExpand('desfecho-chart', 'desfecho', 'Desfechos');
+findAndAttachExpand('especialidade-chart', 'especialidade', 'Top especialidades');
+findAndAttachExpand('pareto-chart', 'pareto', 'Pareto - médicos');
+findAndAttachExpand('timeline-chart', 'timeline', 'Evolução diária & Tendência');
+findAndAttachExpand('monthly-chart', 'monthly', 'Distribuição mensal');
+findAndAttachExpand('quarter-chart', 'quarter', 'Por Trimestre');
+findAndAttachExpand('hourly-chart', 'hourly', 'Horário de Pico');
+findAndAttachExpand('resolution-time-chart', 'resolutionTime', 'Tempo de Conclusão');
+findAndAttachExpand('quadrant-chart', 'quadrant', 'Análise de Quadrante');
+findAndAttachExpand('funnel-chart', 'funnel', 'Funil de Status');
+findAndAttachExpand('pending-days-chart', 'pendingDays', 'Distribuição de Dias Pendentes');
+findAndAttachExpand('status-by-specialty-chart', 'statusBySpecialty', 'Status por Especialidade (Top 10)');
+}
+
+function findAndAttachExpand(canvasId, chartKey, title) {
+const canvas = document.getElementById(canvasId);
+if (!canvas) return;
+const card = canvas.closest('.dash-card');
+if (!card) return;
+const expandBtn = card.querySelector('.expand-btn');
+if (expandBtn) {
+expandBtn.onclick = (e) => {
+e.stopPropagation();
+if (state.charts[chartKey]) {
+openChartModal(state.charts[chartKey], title);
+}
+};
+}
+}
+
+
+function renderInsights(metrics) {
+if (!UI.insights) return;
+const rows = state.filtered;
+if (!rows.length) {
+UI.insights.innerHTML = '<p class="text-sm text-gray-500">Nenhum registro com os filtros atuais.</p>';
+return;
+}
+
+const insights = [];
+const topStatus = metrics.statusData.labels[0];
+const topStatusValue = metrics.statusData.values[0];
+if (topStatus) {
+insights.push({
+title: 'Status predominante',
+text: `${topStatus} responde por ${formatDecimal(calcPercent(topStatusValue, metrics.kpis.total || 1))}% dos registros.`
+});
+}
+
+const topEspecialidade = metrics.especialidadeData.labels[0];
+if (topEspecialidade) {
+insights.push({
+title: 'Especialidade mais acionada',
+text: `${topEspecialidade} concentrou ${formatDecimal(
+calcPercent(metrics.especialidadeData.values[0], metrics.kpis.total || 1)
+)}% das solicitações.`
+});
+}
+
+const peakHourData = metrics.hourlyData;
+if (peakHourData && peakHourData.values.length) {
+const peakValue = Math.max(...peakHourData.values);
+const peakHourIndex = peakHourData.values.indexOf(peakValue);
+const peakHourLabel = peakHourData.labels[peakHourIndex];
+insights.push({
+title: 'Horário de Pico',
+text: `O maior volume de entradas ocorre às ${peakHourLabel}, com ${peakValue} registros.`
+});
+}
+
+const maxRow = rows.reduce(
+(prev, row) => (row.DIAS_PENDENTE > (prev?.DIAS_PENDENTE || 0) ? row : prev),
+rows[0]
+);
+if (maxRow && maxRow.DIAS_PENDENTE) {
+insights.push({
+title: 'Maior tempo pendente',
+text: `${maxRow.NOME_PACIENTE} acumula ${maxRow.DIAS_PENDENTE} dia(s) aguardando (${maxRow.ESPECIALIDADE}).`
+});
+}
+
+if (metrics.kpis.tempoMedioConclusao > 0) {
+insights.push({
+title: 'Tempo médio de conclusão',
+text: `Os casos finalizados levaram em média ${formatDuration(metrics.kpis.tempoMedioConclusao)}.`
+});
+}
+
+UI.insights.innerHTML = insights
+.slice(0, 4)
+.map(
+(item) => `
+<article class="insight-card">
+<h4 class="text-sm font-semibold text-teal-700">${escapeHtml(item.title)}</h4>
+<p class="text-sm text-gray-700 mt-1">${escapeHtml(item.text)}</p>
+</article>
+`
+)
+.join('');
+}
+
+function renderTable(rows) {
+if (!UI.tableBody) return;
+
+if (!rows.length) {
+UI.tableBody.innerHTML =
+'<tr><td colspan="10" class="px-4 py-6 text-center text-sm text-gray-500">Nenhum registro encontrado.</td></tr>';
+setText('table-count', '0 registros');
+return;
+}
+
+const sorted = rows
+.slice()
+.sort((a, b) => {
+const timeA = a.DATA_FECHAMENTO ? a.DATA_FECHAMENTO.getTime() : 0;
+const timeB = b.DATA_FECHAMENTO ? b.DATA_FECHAMENTO.getTime() : 0;
+return timeB - timeA;
+});
+
+UI.tableBody.innerHTML = sorted
+.map((row) => {
+const dataFechamento = row.DATA_FECHAMENTO
+? `${formatDate(row.DATA_FECHAMENTO)}${row.HORA_FECHAMENTO_RAW ? ` ${row.HORA_FECHAMENTO_RAW}` : ''}`
+: row.DATA_FECHAMENTO_RAW || '-';
+const dataFinalizacao = row.DATA_FINALIZACAO ? formatDateTime(row.DATA_FINALIZACAO) : row.DATA_FINALIZACAO_RAW || '-';
+return `
+<tr>
+<td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">${escapeHtml(row.ATENDIMENTO)}</td>
+<td class="px-4 py-3 text-sm text-gray-900 font-semibold min-w-[180px]">${escapeHtml(row.NOME_PACIENTE)}</td>
+<td class="px-4 py-3 text-sm text-gray-700 min-w-[160px]">${escapeHtml(row.ESPECIALIDADE)}</td>
+<td class="px-4 py-3 text-sm text-gray-700 min-w-[160px]">${escapeHtml(row.MEDICO)}</td>
+<td class="px-4 py-3 text-sm text-gray-700">
+<span class="${statusClass(row.STATUS)} status-chip">${escapeHtml(row.STATUS)}</span>
+</td>
+<td class="px-4 py-3 text-sm text-gray-700 min-w-[140px]">${escapeHtml(row.DESFECHO)}</td>
+<td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">${escapeHtml(dataFechamento)}</td>
+<td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">${escapeHtml(dataFinalizacao)}</td>
+<td class="px-4 py-3 text-sm text-gray-700 text-center">${formatNumber(row.DIAS_PENDENTE || 0)}</td>
+<td class="px-4 py-3 text-sm text-gray-600 min-w-[200px]" title="${escapeAttr(row.OBSERVACOES)}">
+${escapeHtml(truncate(row.OBSERVACOES || '', 90)) || '-'}
+</td>
+</tr>
+`;
+})
+.join('');
+
+setText('table-count', `${formatNumber(sorted.length)} registro(s)`);
+}
+
+function exportCsv() {
+if (!state.filtered.length) {
+alert('Não há registros para exportar.');
+return;
+}
+
+const headers = [
+'ATENDIMENTO',
+'RG',
+'NOME_PACIENTE',
+'DATA_FECHAMENTO',
+'HORA_FECHAMENTO',
+'MEDICO',
+'ESPECIALIDADE',
+'DATA_FINALIZACAO',
+'DESFECHO',
+'MES_ANO',
+'TRIMESTRE',
+'DIAS_PENDENTE',
+'STATUS',
+'OBSERVACOES',
+'TEMPO_CONCLUSAO_DIAS'
+];
+
+const rows = state.filtered.map((row) => [
+row.ATENDIMENTO,
+row.RG,
+row.NOME_PACIENTE,
+row.DATA_FECHAMENTO ? formatDate(row.DATA_FECHAMENTO) : row.DATA_FECHAMENTO_RAW,
+row.HORA_FECHAMENTO_RAW,
+row.MEDICO,
+row.ESPECIALIDADE,
+row.DATA_FINALIZACAO ? formatDateTime(row.DATA_FINALIZACAO) : row.DATA_FINALIZACAO_RAW,
+row.DESFECHO,
+row.MES_ANO,
+row.TRIMESTRE,
+row.DIAS_PENDENTE,
+row.STATUS,
+row.OBSERVACOES,
+row.TEMPO_CONCLUSAO !== null ? formatDecimal(row.TEMPO_CONCLUSAO) : ''
+]);
+
+const csv = [headers, ...rows]
+.map((line) =>
+line
+.map((value) => `"${String(value ?? '').replace(/"/g, '""')}"`)
+.join(';')
+)
+.join('\n');
+
+const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+const url = URL.createObjectURL(blob);
+const link = document.createElement('a');
+link.href = url;
+link.download = `dashboard-atendimentos-${toInputDate(new Date())}.csv`;
+document.body.appendChild(link);
+link.click();
+document.body.removeChild(link);
+URL.revokeObjectURL(url);
+log('Exportação CSV concluída.');
+}
+
+// --- Funções de Criação de Gráficos ---
+
+function calculateLinearRegression(data) {
+if (!data || data.length < 2) return null;
+let n = 0;
+let sumX = 0;
+let sumY = 0;
+let sumXY = 0;
+let sumXX = 0;
+const transformedData = data.map(point => ({
+x: point.x.getTime(),
+y: point.y
+}));
+transformedData.forEach(point => {
+sumX += point.x;
+sumY += point.y;
+sumXY += point.x * point.y;
+sumXX += point.x * point.x;
+n++;
+});
+const denominator = (n * sumXX - sumX * sumX);
+if (denominator === 0) return null;
+const b = (n * sumXY - sumX * sumY) / denominator;
+const a = (sumY - b * sumX) / n;
+if (!isFinite(a) || !isFinite(b)) return null;
+const firstX = transformedData[0].x;
+const lastX = transformedData[transformedData.length - 1].x;
+return [
+{ x: new Date(firstX), y: a + b * firstX },
+{ x: new Date(lastX), y: a + b * lastX }
+];
+}
+
+
+function createDoughnut(id, data, colors) {
+const canvas = document.getElementById(id);
+if (!canvas) return null;
+return new Chart(canvas, {
+type: 'doughnut',
+data: {
+labels: data.labels,
+datasets: [
+{
+data: data.values,
+backgroundColor: colors,
+borderWidth: 2,
+borderColor: '#fff',
+hoverOffset: 4
+}
+]
+},
+options: {
+responsive: true,
+maintainAspectRatio: false,
+cutout: '62%',
+plugins: {
+legend: {
+position: 'bottom',
+labels: {
+boxWidth: 16,
+padding: 16,
+font: {
+family: 'Inter'
+}
+}
+},
+tooltip: {
+callbacks: {
+label: function(context) {
+const label = context.label || '';
+const value = context.raw || 0;
+const total = context.dataset.data.reduce((a, b) => a + b, 0);
+const percentage = ((value / (total || 1)) * 100).toFixed(1);
+return `${label}: ${value} (${percentage}%)`;
+}
+}
+}
+}
+}
+});
+}
+
+function createBar(id, data, colors, indexAxis = 'x') {
+const canvas = document.getElementById(id);
+if (!canvas) return null;
+return new Chart(canvas, {
+type: 'bar',
+data: {
+labels: data.labels,
+datasets: [
+{
+data: data.values,
+backgroundColor: colors.length === 1 ? colors[0] : colors.slice(0, data.labels.length),
+borderRadius: 8,
+maxBarThickness: 48,
+hoverBackgroundColor: colors.length === 1 ? colors[0] : colors.slice(0, data.labels.length)
+}
+]
+},
+options: {
+indexAxis,
+responsive: true,
+maintainAspectRatio: false,
+plugins: {
+legend: { display: false },
+tooltip: {
+backgroundColor: 'rgba(0, 0, 0, 0.8)',
+titleFont: {
+family: 'Inter'
+},
+bodyFont: {
+family: 'Inter'
+}
+}
+},
+scales: {
+x: {
+ticks: {
+autoSkip: false,
+maxRotation: indexAxis === 'x' ? 45 : 0,
+color: '#475569',
+font: {
+family: 'Inter'
+}
+},
+grid: { display: false }
+},
+y: {
+beginAtZero: true,
+ticks: {
+color: '#475569',
+precision: 0,
+font: {
+family: 'Inter'
+}
+},
+grid: {
+color: '#e2e8f0',
+drawBorder: false
+}
+}
+},
+animation: {
+duration: 1000,
+easing: 'easeInOutQuart'
+}
+}
+});
+}
+
+// NOVO: Gráfico de Barras Empilhadas
+function createStackedBar(id, data) {
+const canvas = document.getElementById(id);
+if (!canvas) return null;
+
+// data = { labels: ['Espec 1', ...], datasets: [{ label: 'CRÍTICO', data: [1, 5, ...] }, ...] }
+return new Chart(canvas, {
+type: 'bar',
+data: data,
+options: {
+indexAxis: 'y', // Empilhado na horizontal
+responsive: true,
+maintainAspectRatio: false,
+plugins: {
+legend: {
+position: 'bottom',
+labels: {
+font: { family: 'Inter' }
+}
+},
+tooltip: {
+backgroundColor: 'rgba(0, 0, 0, 0.8)',
+}
+},
+scales: {
+x: {
+stacked: true,
+ticks: {
+color: '#475569',
+font: { family: 'Inter' },
+precision: 0
+},
+grid: {
+color: '#e2e8f0',
+drawBorder: false
+}
+},
+y: {
+stacked: true,
+ticks: {
+color: '#475569',
+font: { family: 'Inter' }
+},
+grid: { display: false }
+}
+},
+animation: {
+duration: 1000,
+easing: 'easeInOutQuart'
+}
+}
+});
+}
+
+function createPareto(id, data) {
+const canvas = document.getElementById(id);
+if (!canvas) return null;
+const total = data.values.reduce((sum, value) => sum + value, 0) || 1;
+let acc = 0;
+const percentages = data.values.map((value) => {
+acc += value;
+return (acc / total) * 100;
+});
+
+return new Chart(canvas, {
+type: 'bar',
+data: {
+labels: data.labels,
+datasets: [
+{
+label: 'Qtd',
+data: data.values,
+backgroundColor: chartPalette[0],
+borderRadius: 8,
+yAxisID: 'y',
+order: 2
+},
+{
+label: 'Acumulado %',
+data: percentages,
+type: 'line',
+borderColor: chartPalette[1],
+backgroundColor: hexToRgba(chartPalette[1], 0.1),
+yAxisID: 'y1',
+tension: 0.3,
+fill: true,
+order: 1
+}
+]
+},
+options: {
+responsive: true,
+maintainAspectRatio: false,
+interaction: {
+mode: 'index',
+intersect: false,
+},
+plugins: {
+legend: {
+position: 'bottom',
+labels: {
+font: {
+family: 'Inter'
+}
+}
+},
+tooltip: {
+backgroundColor: 'rgba(0, 0, 0, 0.8)',
+}
+},
+scales: {
+y: {
+beginAtZero: true,
+ticks: {
+color: '#475569',
+precision: 0,
+font: {
+family: 'Inter'
+}
+},
+grid: {
+drawBorder: false
+}
+},
+y1: {
+beginAtZero: true,
+max: 100,
+position: 'right',
+ticks: {
+color: chartPalette[1],
+callback: (value) => `${value}%`,
+font: {
+family: 'Inter'
+}
+},
+grid: { drawOnChartArea: false }
+},
+x: {
+ticks: {
+color: '#475569',
+autoSkip: false,
+maxRotation: 45,
+font: {
+family: 'Inter'
+}
+},
+grid: { display: false }
+}
+},
+animation: {
+duration: 1000,
+easing: 'easeInOutQuart'
+}
+}
+});
+}
+
+function createTimeline(id, data, trendData = null) {
+const canvas = document.getElementById(id);
+if (!canvas) return null;
+
+const datasets = [
+{
+label: 'Atendimentos',
+data,
+borderColor: chartPalette[0],
+backgroundColor: hexToRgba(chartPalette[0], 0.1),
+fill: true,
+tension: 0.4,
+pointRadius: 3,
+pointHoverRadius: 5,
+pointBackgroundColor: chartPalette[0],
+pointBorderColor: '#fff',
+pointBorderWidth: 2
+}
+];
+
+if (trendData) {
+datasets.push({
+label: 'Tendência',
+data: trendData,
+type: 'line',
+borderColor: '#f97316',
+backgroundColor: 'transparent',
+borderWidth: 2,
+borderDash: [5, 5],
+pointRadius: 0,
+pointHoverRadius: 0,
+fill: false,
+tension: 0
+});
+}
+
+return new Chart(canvas, {
+type: 'line',
+data: {
+datasets: datasets
+},
+options: {
+responsive: true,
+maintainAspectRatio: false,
+plugins: {
+legend: { display: true, position: 'bottom' },
+tooltip: {
+backgroundColor: 'rgba(0, 0, 0, 0.8)',
+callbacks: {
+title: function(tooltipItems) {
+if (tooltipItems.length) {
+return formatDate(tooltipItems[0].raw.x);
+}
+return '';
+}
+}
+}
+},
+scales: {
+x: {
+type: 'time',
+time: {
+unit: 'day',
+tooltipFormat: 'dd/MM/yyyy',
+displayFormats: {
+day: 'dd/MM'
+}
+},
+ticks: {
+color: '#475569',
+font: {
+family: 'Inter'
+}
+},
+grid: {
+color: '#e2e8f0',
+drawBorder: false
+}
+},
+y: {
+beginAtZero: true,
+ticks: {
+color: '#475569',
+precision: 0,
+font: {
+family: 'Inter'
+}
+},
+grid: {
+color: 'transparent',
+drawBorder: false
+}
+}
+},
+animation: {
+duration: 1000,
+easing: 'easeInOutQuart'
+}
+}
+});
+}
+
+function createLineChart(id, data, color) {
+const canvas = document.getElementById(id);
+if (!canvas) return null;
+return new Chart(canvas, {
+type: 'line',
+data: {
+labels: data.labels,
+datasets: [{
+label: 'Atendimentos',
+data: data.values,
+borderColor: color,
+backgroundColor: hexToRgba(color, 0.1),
+fill: true,
+tension: 0.4,
+pointRadius: 2,
+pointHoverRadius: 4,
+pointBackgroundColor: color,
+pointBorderColor: '#fff',
+pointBorderWidth: 1
+}]
+},
+options: {
+responsive: true,
+maintainAspectRatio: false,
+plugins: {
+legend: { display: false },
+tooltip: {
+backgroundColor: 'rgba(0, 0, 0, 0.8)',
+}
+},
+scales: {
+x: {
+ticks: {
+color: '#475569',
+font: { family: 'Inter' },
+autoSkip: true,
+maxTicks: 12
+}
+},
+y: {
+beginAtZero: true,
+ticks: {
+color: '#475569',
+precision: 0,
+font: { family: 'Inter' }
+},
+grid: {
+color: '#e2e8f0',
+drawBorder: false
+}
+}
+}
+}
+});
+}
+
+// [INÍCIO DA ALTERAÇÃO] Cores do quadrante atualizadas
+function createQuadrantChart(id, data) {
+const canvas = document.getElementById(id);
+if (!canvas) return null;
+
+const avgX = data.length ? data.reduce((sum, p) => sum + p.x, 0) / data.length : 0;
+const avgY = data.length ? data.reduce((sum, p) => sum + p.y, 0) / data.length : 0;
+
+return new Chart(canvas, {
+type: 'scatter',
+data: {
+datasets: [{
+label: 'Especialidades',
+data: data,
+backgroundColor: data.map(d => {
+// chartPalette[3] = Verde Vivo (#22c55e)
+// chartPalette[0] = Teal Vivo (#14b8a6)
+// chartPalette[4] = Laranja (#f59e0b)
+// chartPalette[5] = Vermelho (#ef4444)
+if (d.x >= avgX && d.y >= avgY) return hexToRgba(chartPalette[3], 0.7); // Superior Direito (Alta/Alta)
+if (d.x >= avgX && d.y < avgY) return hexToRgba(chartPalette[4], 0.7); // Inferior Direito (Baixa/Alta)
+if (d.x < avgX && d.y >= avgY) return hexToRgba(chartPalette[0], 0.7); // Superior Esquerdo (Alta/Baixa)
+return hexToRgba(chartPalette[5], 0.7); // Inferior Esquerdo (Baixa/Baixa)
+}),
+pointRadius: data.map(d => Math.max(5, Math.sqrt(d.size) * 1.5)),
+pointHoverRadius: data.map(d => Math.max(7, Math.sqrt(d.size) * 2))
+}]
+},
+options: {
+responsive: true,
+maintainAspectRatio: false,
+plugins: {
+legend: { display: false },
+tooltip: {
+callbacks: {
+label: (context) => {
+const point = data[context.dataIndex];
+if (!point) return '';
+return [
+`${point.label}`,
+`Volume: ${point.x} atendimentos`,
+`Efetividade: ${point.y.toFixed(1)}%`
+];
+}
+}
+}
+},
+scales: {
+x: {
+title: {
+display: true,
+text: 'Volume de Atendimentos',
+font: { family: 'Inter', weight: 600 }
+},
+ticks: { precision: 0 }
+},
+y: {
+title: {
+display: true,
+text: 'Taxa de Sucesso (%)',
+font: { family: 'Inter', weight: 600 }
+},
+min: 0,
+max: 100
+}
+}
+}
+});
+}
+// [FIM DA ALTERAÇÃO]
+
+function destroyCharts() {
+closeChartModal(); // Fecha e destrói o gráfico do modal
+Object.keys(state.charts).forEach(key => {
+if (key !== 'modalChart' && state.charts[key]) {
+state.charts[key].destroy();
+}
+state.charts[key] = null;
+});
+state.charts = { modalChart: null }; // Reseta o objeto
+}
+
+// --- Funções de Agregação de Dados ---
+
+function aggregate(rows, key, limit = null) {
+const counts = {};
+rows.forEach((row) => {
+const value = row[key] || 'N/A';
+counts[value] = (counts[value] || 0) + 1;
+});
+let entries = Object.entries(counts)
+.filter(([label]) => label && label !== 'N/A')
+.sort((a, b) => b[1] - a[1]);
+if (limit) entries = entries.slice(0, limit);
+return { labels: entries.map((entry) => entry[0]), values: entries.map((entry) => entry[1]) };
+}
+
+function aggregateTimeline(rows) {
+const counts = {};
+rows.forEach((row) => {
+if (row.DATA_FECHAMENTO) {
+const key = row.DATA_FECHAMENTO.toISOString().split('T')[0];
+counts[key] = (counts[key] || 0) + 1;
+}
+});
+return Object.entries(counts)
+.map(([date, value]) => ({ x: new Date(date), y: value }))
+.sort((a, b) => a.x - b.x);
+}
+
+function aggregateMonthly(rows) {
+const counts = {};
+rows.forEach((row) => {
+let label = row.MES_ANO;
+if (!label && row.DATA_FECHAMENTO) label = `${String(row.DATA_FECHAMENTO.getMonth() + 1).padStart(2, '0')}/${row.DATA_FECHAMENTO.getFullYear()}`;
+label = label || 'Sem mês';
+counts[label] = (counts[label] || 0) + 1;
+});
+const result = { labels: [], values: [] };
+Object.entries(counts)
+.sort((a, b) => monthToDate(a[0]) - monthToDate(b[0]))
+.forEach(([label, value]) => {
+result.labels.push(label);
+result.values.push(value);
+});
+return result;
+}
+
+function aggregateQuarterly(rows) {
+const counts = {};
+rows.forEach((row) => {
+const value = row['TRIMESTRE'] || 'N/A';
+counts[value] = (counts[value] || 0) + 1;
+});
+let entries = Object.entries(counts)
+.filter(([label]) => label && label !== 'N/A')
+.sort((a, b) => a[0].localeCompare(b[0], 'pt-BR'));
+return { labels: entries.map((entry) => entry[0]), values: entries.map((entry) => entry[1]) };
+}
+
+function aggregateHourly(rows) {
+const counts = Array(24).fill(0);
+rows.forEach((row) => {
+if (row.HORA !== null && row.HORA >= 0 && row.HORA <= 23) {
+counts[row.HORA]++;
+}
+});
+return {
+labels: Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`),
+values: counts
+};
+}
+
+function aggregateResolutionTime(rows) {
+const bins = { '0-1 dia': 0, '2-7 dias': 0, '8-14 dias': 0, '15-30 dias': 0, '31+ dias': 0 };
+const concluidos = rows.filter(row => row.TEMPO_CONCLUSAO !== null && row.TEMPO_CONCLUSAO >= 0);
+concluidos.forEach(row => {
+const dias = row.TEMPO_CONCLUSAO;
+if (dias <= 1) bins['0-1 dia']++;
+else if (dias <= 7) bins['2-7 dias']++;
+else if (dias <= 14) bins['8-14 dias']++;
+else if (dias <= 30) bins['15-30 dias']++;
+else bins['31+ dias']++;
+});
+return { labels: Object.keys(bins), values: Object.values(bins) };
+}
+
+// NOVO: Agregação de Dias Pendentes
+function aggregatePendingDays(rows) {
+const bins = { '0-7 dias': 0, '8-14 dias': 0, '15-30 dias': 0, '31-60 dias': 0, '61+ dias': 0 };
+rows.forEach(row => {
+const dias = row.DIAS_PENDENTE;
+if (dias <= 7) bins['0-7 dias']++;
+else if (dias <= 14) bins['8-14 dias']++;
+else if (dias <= 30) bins['15-30 dias']++;
+else if (dias <= 60) bins['31-60 dias']++;
+else bins['61+ dias']++;
+});
+return { labels: Object.keys(bins), values: Object.values(bins) };
+}
+
+// NOVO: Agregação de Status por Especialidade
+function aggregateStatusBySpecialty(rows) {
+// 1. Encontrar as Top 10 especialidades
+const topEspecialidades = aggregate(rows, 'ESPECIALIDADE', 10).labels;
+if (!topEspecialidades.length) return { labels: [], datasets: [] };
+
+// 2. Encontrar todos os status únicos (para as legendas)
+const allStatus = [...state.meta.statuses].sort((a, b) => {
+// Prioriza status "perigosos"
+if (a === 'CRÍTICO') return -1;
+if (b === 'CRÍTICO') return 1;
+if (a === 'ATENÇÃO') return -1;
+if (b === 'ATENÇÃO') return 1;
+return a.localeCompare(b);
+});
+
+// 3. Contar status para cada top especialidade
+const counts = {}; // { 'Espec 1': { 'CRÍTICO': 10, 'NORMAL': 5 }, ... }
+rows.forEach(row => {
+const esp = row.ESPECIALIDADE;
+if (topEspecialidades.includes(esp)) {
+if (!counts[esp]) counts[esp] = {};
+const status = row.STATUS || 'N/A';
+counts[esp][status] = (counts[esp][status] || 0) + 1;
+}
+});
+
+// 4. Formatar para Chart.js
+const datasets = allStatus.map(status => {
+return {
+label: status,
+data: topEspecialidades.map(esp => counts[esp]?.[status] || 0),
+backgroundColor: statusColors[status] || statusColors['OUTRO']
+};
+});
+
+return {
+labels: topEspecialidades,
+datasets: datasets
+};
+}
+
+
+function aggregateSpecialtyQuadrant(rows) {
+const specialtyData = {};
+rows.forEach(row => {
+const esp = row.ESPECIALIDADE || 'N/A';
+if (esp === 'N/A') return;
+if (!specialtyData[esp]) {
+specialtyData[esp] = { total: 0, positivos: 0 };
+}
+specialtyData[esp].total++;
+const desfecho = row.DESFECHO.toUpperCase();
+if (desfecho.includes('ACEITO') ||
+desfecho.includes('CONCLU') ||
+desfecho.includes('ALTA') ||
+desfecho.includes('CDR') ||
+desfecho.includes('AGENDADO')) {
+specialtyData[esp].positivos++;
+}
+});
+return Object.entries(specialtyData)
+.map(([name, data]) => ({
+x: data.total,
+y: (data.total > 0) ? (data.positivos / data.total) * 100 : 0,
+label: name,
+size: data.total
+}))
+.filter(d => d.x >= 5);
+}
+
+function aggregateFunnel(rows) {
+const stages = {
+'Total Filtrado': rows.length,
+'Status NORMAL': rows.filter(r => (r.STATUS || '').toUpperCase() === 'NORMAL').length,
+'Desfecho ACEITO': rows.filter(r => (r.DESFECHO || '').toUpperCase().includes('ACEITO')).length,
+'Desfecho CONCLUÍDO/ALTA': rows.filter(r => (r.DESFECHO || '').toUpperCase().includes('CONCLU') || (r.DESFECHO || '').toUpperCase().includes('ALTA')).length
+};
+return {
+labels: Object.keys(stages),
+values: Object.values(stages)
+};
+}
+
+function monthToDate(label) {
+const [month, year] = label.split('/').map(Number);
+if (!Number.isFinite(month) || !Number.isFinite(year)) return new Date(0);
+return new Date(year, month - 1, 1);
+}
+
+// --- Helpers de UI e Formatação ---
+
+function updateFilterChips() {
+if (!UI.filterChips) return;
+const chips = [];
+if (state.filters.start || state.filters.end) {
+const start = state.filters.start ? formatDate(new Date(`${state.filters.start}T00:00:00`)) : 'início';
+const end = state.filters.end ? formatDate(new Date(`${state.filters.end}T00:00:00`)) : 'fim';
+chips.push(`<span class="px-3 py-1 bg-teal-100 text-teal-700 rounded-full text-xs font-semibold">Período: ${escapeHtml(start)} → ${escapeHtml(end)}</span>`);
+}
+if (state.filters.statuses.length) {
+chips.push(`<span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">Status: ${escapeHtml(state.filters.statuses.join(', '))}</span>`);
+}
+if (state.filters.especialidades.length) {
+chips.push(`<span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">Especialidades: ${escapeHtml(state.filters.especialidades.slice(0, 3).join(', '))}${state.filters.especialidades.length > 3 ? '...' : ''}</span>`);
+}
+if (state.filters.search) {
+chips.push(`<span class="px-3 py-1 bg-sky-100 text-sky-700 rounded-full text-xs font-semibold">Busca: ${escapeHtml(state.filters.search)}</span>`);
+}
+UI.filterChips.innerHTML = chips.length
+? chips.join('')
+: '<span class="text-xs text-gray-500">Nenhum filtro adicional aplicado.</span>';
+}
+
+function updateLastUpdate() {
+if (!UI.lastUpdate || !state.meta.fetchedAt) return;
+const percent = formatPercent(state.filtered.length, state.raw.length || 1);
+UI.lastUpdate.textContent = `Atualizado em ${formatDateTime(state.meta.fetchedAt)} • ${formatNumber(state.filtered.length)} de ${formatNumber(state.raw.length)} registros (${percent}).`;
+}
+
+function parseDate(value) {
+if (!value) return null;
+if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
+const str = String(value).trim();
+if (!str) return null;
+let isoStr = str.replace(' ', 'T');
+if (isoStr.length === 19) isoStr += 'Z';
+const iso = new Date(isoStr);
+if (!Number.isNaN(iso.getTime())) return iso;
+const [datePart, timePart = '00:00:00'] = str.split(' ');
+if (datePart.includes('/')) {
+const [day, month, year] = datePart.split('/').map(Number);
+const [hour = 0, minute = 0, second = 0] = timePart.split(':').map(Number);
+if ([day, month, year].every(Number.isFinite) && year >= 1900) {
+const parsed = new Date(year, month - 1, day, hour, minute, second);
+if (!Number.isNaN(parsed.getTime())) return parsed;
+}
+}
+return null;
+}
+
+function parseTime(timeStr) {
+if (!timeStr) return null;
+const parts = String(timeStr).split(':').map(Number);
+if (parts.length > 0 && Number.isFinite(parts[0])) {
+return parts[0];
+}
+return null;
+}
+
+function setText(id, value) {
+const element = document.getElementById(id);
+if (element) element.textContent = value;
+}
+
+function formatNumber(value) {
+return new Intl.NumberFormat('pt-BR').format(value || 0);
+}
+
+function formatDecimal(value, decimals = 1) {
+if (!Number.isFinite(value)) return '0,0';
+return value.toFixed(decimals).replace('.', ',');
+}
+
+function calcPercent(part, total) {
+if (!total) return 0;
+return (part / total) * 100;
+}
+
+function formatPercent(part, total) {
+return `${formatDecimal(calcPercent(part, total))}%`;
+}
+
+function formatDuration(days) {
+if (!Number.isFinite(days) || days <= 0) return 'N/D';
+if (days < 1) return `${formatDecimal(days * 24)}h`;
+return `${formatDecimal(days)} dias`;
+}
+
+function formatDate(date) {
+if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '-';
+return date.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+}
+
+function formatDateTime(date) {
+if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '-';
+return date.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Sao_Paulo' });
+}
+
+function toInputDate(date) {
+if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '';
+const local = new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
+return local.toISOString().split('T')[0];
+}
+
+function medianValue(values) {
+if (!values.length) return 0;
+const sorted = values.slice().sort((a, b) => a - b);
+const mid = Math.floor(sorted.length / 2);
+if (sorted.length % 2 === 0) return (sorted[mid - 1] + sorted[mid]) / 2;
+return sorted[mid];
+}
+
+function shiftDays(date, days) {
+const copy = new Date(date);
+copy.setDate(copy.getDate() - days);
+return copy;
+}
+function truncate(text, length) {
+if (!text) return '';
+if (text.length <= length) return text;
+return `${text.slice(0, length - 3)}...`;
+}
+
+function statusClass(status) {
+const normalized = normalize(status);
+if (normalized.includes('crit')) return 'status-chip bg-red-100 text-red-700';
+if (normalized.includes('aten')) return 'status-chip bg-yellow-100 text-yellow-700';
+if (normalized.includes('pend')) return 'status-chip bg-blue-100 text-blue-700';
+if (normalized.includes('neg')) return 'status-chip bg-gray-200 text-gray-700';
+if (normalized.includes('normal')) return 'status-chip bg-teal-100 text-teal-700';
+return 'status-chip bg-green-100 text-green-700';
+}
+
+function normalize(text) {
+return String(text || '')
+.normalize('NFD')
+.replace(/[\u0300-\u036f]/g, '')
+.toLowerCase();
+}
+
+function escapeHtml(text) {
+return String(text || '')
+.replace(/&/g, '&amp;')
+.replace(/</g, '&lt;')
+.replace(/>/g, '&gt;')
+.replace(/"/g, '&quot;')
+.replace(/'/g, '&#39;');
+}
+
+function escapeAttr(text) {
+return escapeHtml(text).replace(/`/g, '&#96;');
+}
+
+function clearDebug() {
+if (UI.debugOutput) UI.debugOutput.innerHTML = '';
+}
+
+function log(message) {
+const time = new Date().toLocaleTimeString();
+const entry = `[${time}] ${message}`;
+console.log(entry);
+if (UI.debugOutput) {
+UI.debugOutput.innerHTML += `${escapeHtml(entry)}<br />`;
+UI.debugOutput.scrollTop = UI.debugOutput.scrollHeight;
+}
+}
+</script> </body>
+</html>
