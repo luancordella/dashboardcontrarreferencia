@@ -482,20 +482,6 @@ Ajuste o período, status, especialidades ou busque termos livres.
 <h5>Pareto</h5> Ordena médicos por volume e mostra percentual acumulado (regra 80/20) para identificar concentradores.
 </div>
 </div>
-<!-- Evolução Diária -->
-<div class="dash-card p-6">
-<div class="flex items-center justify-between mb-4">
-<h3 class="text-xl font-bold gradient-text"><i class="fas fa-chart-line mr-2"></i>Evolução diária & Tendência</h3>
-</div>
-<div class="chart-container">
-<canvas id="timeline-chart"></canvas>
-</div>
-<button class="expand-btn" aria-label="Ampliar gráfico"><i class="fas fa-expand"></i></button>
-<button class="info-btn" aria-label="Informações da evolução diária"><i class="fas fa-info"></i></button>
-<div class="info-tooltip">
-<h5>Evolução diária</h5> Série temporal de atendimentos fechados por dia, com linha de tendência para indicar direção.
-</div>
-</div>
 <!-- Distribuição Mensal -->
 <div class="dash-card p-6">
 <div class="flex items-center justify-between mb-4">
@@ -511,20 +497,6 @@ Ajuste o período, status, especialidades ou busque termos livres.
 </div>
 </div>
 
-<!-- Trimestre -->
-<div class="dash-card p-6">
-<div class="flex items-center justify-between mb-4">
-<h3 class="text-xl font-bold gradient-text"><i class="fas fa-calendar-check mr-2"></i>Por Trimestre</h3>
-</div>
-<div class="chart-container">
-<canvas id="quarter-chart"></canvas>
-</div>
-<button class="expand-btn" aria-label="Ampliar gráfico"><i class="fas fa-expand"></i></button>
-<button class="info-btn" aria-label="Informações por trimestre"><i class="fas fa-info"></i></button>
-<div class="info-tooltip">
-<h5>Trimestre</h5> Distribuição dos atendimentos agrupados por trimestre civil.
-</div>
-</div>
 <!-- Horário de Pico -->
 <div class="dash-card p-6">
 <div class="flex items-center justify-between mb-4">
@@ -707,6 +679,65 @@ Ajuste o período, status, especialidades ou busque termos livres.
         </div>
     </div>
 </div>
+
+<!-- PREVISÃO AVANÇADA -->
+<div class="dash-card p-6 lg:col-span-2 mb-8 mt-6 border-l-4 border-indigo-500">
+    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
+        <div>
+            <h3 class="text-2xl font-bold text-gray-800">
+                <i class="fas fa-crystal-ball mr-2 text-indigo-600"></i>Previsão de Demanda (AI Forecast)
+            </h3>
+            <p class="text-sm text-gray-500">
+                Modelo matemático para projetar atendimentos futuros com intervalo de confiança.
+            </p>
+        </div>
+        
+        <div class="flex flex-wrap items-center gap-4 bg-gray-50 p-2 rounded-lg border border-gray-200">
+            <div>
+                <label class="text-xs font-bold text-gray-500 uppercase block mb-1">Modelo Matemático</label>
+                <select id="pred-model-type" class="bg-white border border-gray-300 text-gray-700 text-sm rounded focus:ring-indigo-500 focus:border-indigo-500 block w-40 p-2">
+                    <option value="linear" selected>Linear (Simples)</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-xs font-bold text-gray-500 uppercase block mb-1">Horizonte (Meses)</label>
+                <div class="flex items-center gap-2">
+                    <input type="range" id="pred-months" min="1" max="24" value="6" class="w-32 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                    <span id="pred-months-label" class="text-sm font-bold text-indigo-600 w-6">6</span>
+                </div>
+            </div>
+            <button id="btn-run-prediction" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition-colors text-sm">
+                <i class="fas fa-sync-alt mr-1"></i> Recalcular
+            </button>
+        </div>
+    </div>
+
+    <div id="predictive-chart" class="w-full h-[500px]"></div>
+
+    <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-slate-50 border border-slate-200 rounded-lg p-4">
+            <div class="text-xs font-bold text-slate-400 uppercase mb-1">Fórmula Aplicada</div>
+            <div id="explain-formula" class="font-mono text-sm text-slate-700 break-all font-semibold">Calculando...</div>
+        </div>
+        
+<div class="bg-slate-50 border border-slate-200 rounded-lg p-4">
+<div class="text-xs font-bold text-slate-400 uppercase mb-1">Qualidade do Ajuste (R²)</div>
+<div class="flex items-baseline gap-2">
+<span id="explain-r2" class="text-2xl font-bold text-indigo-600">--</span>
+<span id="explain-quality" class="text-xs font-medium px-2 py-0.5 rounded bg-gray-200 text-gray-800">--</span>
+</div>
+            <p class="text-xs text-slate-500 mt-2">Modelo linear por padrão (estável). Quanto mais próximo de 1.0, mais o modelo explica a variação dos dados.</p>
+</div>
+
+        <div class="bg-indigo-50 border border-indigo-100 rounded-lg p-4">
+            <div class="text-xs font-bold text-indigo-400 uppercase mb-1">Insight de Gestão</div>
+            <p id="explain-insight" class="text-sm text-indigo-900 leading-snug">
+                Aguardando dados para gerar análise...
+            </p>
+        </div>
+    </div>
+</div>
+
 <!-- [FIM DA SEÇÃO NOVA] -->
 
 <!-- INSIGHTS E TABELA -->
@@ -782,14 +813,16 @@ const state = {
 raw: [],
 filtered: [],
 charts: {
- modalChart: null, // Referência para o gráfico no modal (Chart.js)
- modalPlotly: null // Referência para o gráfico Plotly no modal
+modalChart: null, // Referência para o gráfico no modal (Chart.js)
+modalPlotly: null // Referência para o gráfico Plotly no modal
 },
 filters: { start: '', end: '', statuses: [], especialidades: [], search: '' },
 meta: { statuses: [], especialidades: [], bounds: { min: null, max: null }, fetchedAt: null },
 quick: null,
 filterTimeout: null,
-plotlyCache: {}
+forecastMonths: 3,
+plotlyCache: {},
+monthlyData: { labels: [], values: [] }
 };
 
 // Paleta de cores "hospitalar"
@@ -859,6 +892,12 @@ UI.tableBody = document.getElementById('detail-table-body');
 UI.tableCount = document.getElementById('table-count');
 UI.tableSearch = document.getElementById('table-search');
 UI.insights = document.getElementById('insight-container');
+UI.forecastMonths = document.getElementById('forecast-months');
+UI.forecastMonthsLabel = document.getElementById('forecast-months-label');
+UI.predModelType = document.getElementById('pred-model-type');
+UI.predMonths = document.getElementById('pred-months');
+UI.predMonthsLabel = document.getElementById('pred-months-label');
+UI.predRun = document.getElementById('btn-run-prediction');
 UI.quickButtons = [
 document.getElementById('quick-last-7'),
 document.getElementById('quick-last-30'),
@@ -964,6 +1003,20 @@ window.addEventListener('keydown', (e) => {
 if (e.key === 'Escape' && UI.chartModal.classList.contains('show')) {
 closeChartModal();
 }
+});
+
+UI.forecastMonths?.addEventListener('input', (e) => {
+const v = Number(e.target.value) || 1;
+state.forecastMonths = v;
+if (UI.forecastMonthsLabel) UI.forecastMonthsLabel.textContent = String(v);
+updateDashboard();
+});
+
+UI.predRun?.addEventListener('click', () => {
+updatePredictiveAnalysis();
+});
+UI.predMonths?.addEventListener('input', (e) => {
+if (UI.predMonthsLabel) UI.predMonthsLabel.textContent = e.target.value;
 });
 }
 
@@ -1265,6 +1318,11 @@ renderPlotlyCharts(state.filtered); // Novo: Gráficos avançados
 renderInsights(metrics);
 renderTable(state.filtered);
 updateLastUpdate();
+if (UI.forecastMonthsLabel) UI.forecastMonthsLabel.textContent = String(state.forecastMonths || 3);
+if (UI.forecastMonths) UI.forecastMonths.value = String(state.forecastMonths || 3);
+state.monthlyData = metrics.timelineData;
+if (UI.predMonthsLabel && UI.predMonths) UI.predMonthsLabel.textContent = UI.predMonths.value || '6';
+updatePredictiveAnalysis();
 }
 
 function computeMetrics(rows) {
@@ -1293,6 +1351,8 @@ row.DESFECHO.includes(term)
 )
 ).length;
 
+const timelineMonthly = aggregateTimelineMonthly(rows);
+
 return {
 kpis: {
 total,
@@ -1307,7 +1367,7 @@ statusData: aggregate(rows, 'STATUS'),
 desfechoData: aggregate(rows, 'DESFECHO', 10),
 especialidadeData: aggregate(rows, 'ESPECIALIDADE', 10),
 medicoData: aggregate(rows, 'MEDICO', 10),
-timelineData: aggregateTimeline(rows),
+timelineData: timelineMonthly,
 monthlyData: aggregateMonthly(rows),
 quarterData: aggregateQuarterly(rows),
 hourlyData: aggregateHourly(rows),
@@ -1315,7 +1375,9 @@ resolutionTimeData: aggregateResolutionTime(rows),
 funnelData: aggregateFunnel(rows),
 pendingDaysData: aggregatePendingDays(rows),
 statusBySpecialtyData: aggregateStatusBySpecialty(rows),
-yamazumiData: aggregateYamazumi(rows)
+yamazumiData: aggregateYamazumi(rows),
+timelineTrend: buildTrendSeries(timelineMonthly.values),
+timelineForecast: buildTimelineForecastSeries(timelineMonthly, state.forecastMonths || 3)
 };
 }
 
@@ -1434,6 +1496,127 @@ findAndAttachPlotlyExpand('heatmap-chart', 'heatmap', 'Mapa de Calor: Ocupação
 findAndAttachPlotlyExpand('treemap-chart', 'treemap', 'Volumetria (Treemap)');
 }
 
+function updatePredictiveAnalysis() {
+const data = state.monthlyData;
+if (!data || !data.labels || !data.labels.length || typeof Plotly === 'undefined') return;
+const xLabels = data.labels;
+const yValues = data.values;
+if (yValues.length < 2) return;
+const xIndices = yValues.map((_, i) => i);
+
+const modelType = document.getElementById('pred-model-type')?.value || 'linear';
+const horizon = parseInt(document.getElementById('pred-months')?.value, 10) || 6;
+let degree = 1;
+// Apenas linear por estabilidade; opções polinomiais desabilitadas
+
+const regression = calculateAdvancedRegression(xIndices, yValues, degree);
+if (!regression) return;
+
+const lastIndex = xIndices[xIndices.length - 1];
+const futureIndices = [];
+const futureLabels = [];
+const lastDateParts = xLabels[xLabels.length - 1].split('/');
+let currentDate = new Date(parseInt(lastDateParts[1], 10), parseInt(lastDateParts[0], 10) - 1, 1);
+for (let i = 1; i <= horizon; i++) {
+futureIndices.push(lastIndex + i);
+currentDate.setMonth(currentDate.getMonth() + 1);
+const m = String(currentDate.getMonth() + 1).padStart(2, '0');
+const y = currentDate.getFullYear();
+futureLabels.push(`${m}/${y}`);
+}
+
+const trendValues = xIndices.map(xi => predictPoly(xi, regression.coeffs));
+const forecastValues = futureIndices.map(xi => predictPoly(xi, regression.coeffs));
+
+const zScore = 1.96;
+const upperC = forecastValues.map((y, i) => y + (zScore * regression.stdErr * (1 + (i * 0.1))));
+const lowerC = forecastValues.map((y, i) => Math.max(0, y - (zScore * regression.stdErr * (1 + (i * 0.1)))));
+
+const traceHistory = {
+x: xLabels, y: yValues,
+mode: 'lines+markers', name: 'Histórico Real',
+line: { color: '#6366f1', width: 3 },
+marker: { size: 6, color: '#6366f1' }
+};
+
+const traceTrend = {
+x: xLabels, y: trendValues,
+mode: 'lines', name: 'Ajuste do Modelo',
+line: { color: '#f59e0b', width: 2, dash: 'solid' },
+hoverinfo: 'none'
+};
+
+const traceForecast = {
+x: futureLabels, y: forecastValues,
+mode: 'lines', name: 'Previsão',
+line: { color: '#f59e0b', width: 2, dash: 'dot' }
+};
+
+const traceUpper = {
+x: futureLabels, y: upperC,
+mode: 'lines', marker: {color:"444"}, line: {width:0},
+name: 'Limite Superior', showlegend: false, hoverinfo: 'skip'
+};
+
+const traceLower = {
+x: futureLabels, y: lowerC,
+fill: 'tonexty', fillcolor: 'rgba(245, 158, 11, 0.2)',
+mode: 'lines', marker: {color:"444"}, line: {width:0},
+name: 'Intervalo de Confiança (95%)', hoverinfo: 'skip'
+};
+
+const layout = {
+autosize: true,
+font: { family: 'Inter, sans-serif' },
+margin: { l: 40, r: 20, t: 20, b: 40 },
+showlegend: true,
+legend: { orientation: 'h', y: 1.1 },
+xaxis: { type: 'category', title: 'Período' },
+yaxis: { title: 'Volume de Atendimentos', fixedrange: true },
+hovermode: 'x unified',
+plot_bgcolor: '#ffffff',
+paper_bgcolor: '#ffffff'
+};
+
+const config = { responsive: true, displayModeBar: false };
+
+Plotly.newPlot('predictive-chart', [traceLower, traceUpper, traceHistory, traceTrend, traceForecast], layout, config);
+
+document.getElementById('explain-formula').innerHTML = formatPolyEquation(regression.coeffs);
+
+const r2 = regression.r2;
+document.getElementById('explain-r2').textContent = r2.toFixed(3);
+let qualityText = "Fraco";
+let qualityColor = "bg-red-100 text-red-800";
+if(r2 > 0.6) { qualityText = "Moderado"; qualityColor = "bg-yellow-100 text-yellow-800"; }
+if(r2 > 0.8) { qualityText = "Bom"; qualityColor = "bg-green-100 text-green-800"; }
+if(r2 > 0.9) { qualityText = "Excelente"; qualityColor = "bg-emerald-100 text-emerald-800"; }
+const qualityEl = document.getElementById('explain-quality');
+qualityEl.textContent = qualityText;
+qualityEl.className = `text-xs font-medium px-2 py-0.5 rounded ${qualityColor}`;
+
+const lastVal = yValues[yValues.length-1];
+const lastPred = forecastValues[forecastValues.length-1];
+const growth = lastVal ? ((lastPred - lastVal) / lastVal) * 100 : 0;
+
+let insight = "";
+if (regression.degree > 1 && regression.coeffs[2] > 0) {
+insight += "O modelo detectou uma <strong>curva de aceleração</strong> (concavidade positiva). ";
+} else if (regression.degree > 1 && regression.coeffs[2] < 0) {
+insight += "O modelo sugere uma <strong>desaceleração ou saturação</strong> do crescimento. ";
+}
+
+if (growth > 5) {
+insight += `Previsão de <strong>crescimento de ${growth.toFixed(1)}%</strong> no final do período projetado. Prepare recursos adicionais.`;
+} else if (growth < -5) {
+insight += `Previsão de <strong>queda de ${Math.abs(growth).toFixed(1)}%</strong>. Oportunidade para reorganizar backlog.`;
+} else {
+insight += "Cenário de <strong>estabilidade</strong>. O volume deve se manter próximo do patamar atual.";
+}
+
+document.getElementById('explain-insight').innerHTML = insight;
+}
+
 // --- CHART.JS ---
 function renderCharts(metrics) {
 destroyCharts();
@@ -1442,8 +1625,7 @@ state.charts.desfecho = createBar('desfecho-chart', metrics.desfechoData, chartP
 state.charts.especialidade = createBar('especialidade-chart', metrics.especialidadeData, [chartPalette[0]], 'y');
 state.charts.pareto = createPareto('pareto-chart', metrics.medicoData);
 
-const trendData = calculateLinearRegression(metrics.timelineData);
-state.charts.timeline = createTimeline('timeline-chart', metrics.timelineData, trendData);
+state.charts.timeline = createTimeline('timeline-chart', metrics.timelineData, metrics.timelineTrend, metrics.timelineForecast);
 
 state.charts.monthly = createBar('monthly-chart', metrics.monthlyData, [chartPalette[2]]);
 state.charts.quarter = createDoughnut('quarter-chart', metrics.quarterData, chartPalette.slice(0, 6));
@@ -1741,28 +1923,55 @@ x: { ticks: { autoSkip: false, maxRotation: 45 }, grid: { display: false } }
 });
 }
 
-function createTimeline(id, data, trendData = null) {
+function createTimeline(id, series, trendSeries = null, forecastSeries = null) {
 const canvas = document.getElementById(id);
 if (!canvas) return null;
-const mainData = data.map(p => ({ x: p.x, y: p.y }));
+if (!series || !series.labels || !series.labels.length) return null;
+
+const baseLabels = series.labels;
+const forecastLabels = forecastSeries?.labels || [];
+const labels = baseLabels.concat(forecastLabels);
+
+const mainData = series.values.concat(Array(forecastLabels.length).fill(null));
 const datasets = [{
 label: 'Atendimentos', data: mainData, borderColor: chartPalette[0], backgroundColor: hexToRgba(chartPalette[0], 0.1),
-fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: chartPalette[0], pointBorderColor: '#fff', pointBorderWidth: 2,
-parsing: false, spanGaps: true
+fill: true, tension: 0.3, pointRadius: 3, pointBackgroundColor: chartPalette[0], pointBorderColor: '#fff', pointBorderWidth: 2,
+spanGaps: true
 }];
-if (trendData) {
+
+if (trendSeries && trendSeries.length) {
+const trendData = trendSeries.concat(Array(forecastLabels.length).fill(null));
 datasets.push({
-label: 'Tendência', data: trendData.map(p => ({ x: p.x, y: p.y })), type: 'line', borderColor: '#f97316', backgroundColor: 'transparent',
-borderWidth: 2, borderDash: [5, 5], pointRadius: 0, fill: false, tension: 0,
-parsing: false, spanGaps: true
+label: 'Tendência (regressão)', data: trendData, type: 'line', borderColor: '#f97316', backgroundColor: 'transparent',
+borderWidth: 2, borderDash: [6, 6], pointRadius: 0, fill: false, tension: 0
 });
 }
+
+if (forecastSeries && forecastSeries.values && forecastSeries.values.length) {
+const forecastData = Array(baseLabels.length).fill(null).concat(forecastSeries.values);
+datasets.push({
+label: 'Previsão', data: forecastData, type: 'line',
+borderColor: '#8b5cf6', backgroundColor: hexToRgba('#8b5cf6', 0.08), borderDash: [3, 6],
+pointRadius: 3, pointBackgroundColor: '#8b5cf6', pointBorderColor: '#fff', pointBorderWidth: 1,
+fill: true, tension: 0.25, spanGaps: true
+});
+}
+
 return new Chart(canvas, {
-type: 'line', data: { datasets: datasets },
-options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'bottom' }, tooltip: { callbacks: { label: (ctx) => { const v = ctx.parsed.y ?? 0; return `${ctx.dataset.label}: ${formatNumber(v)}`; } } } } },
+type: 'line',
+data: { labels, datasets },
+options: {
+responsive: true,
+maintainAspectRatio: false,
+interaction: { mode: 'index', intersect: false },
+plugins: {
+legend: { display: true, position: 'bottom' },
+tooltip: { callbacks: { label: (ctx) => { const v = ctx.parsed.y ?? 0; return `${ctx.dataset.label}: ${formatNumber(Math.round(v))}`; } } }
+},
 scales: {
-x: { type: 'time', time: { unit: 'day', tooltipFormat: 'dd/MM/yyyy', displayFormats: { day: 'dd/MM' } }, grid: { color: '#e2e8f0', drawBorder: false } },
+x: { type: 'category', grid: { color: '#e2e8f0', drawBorder: false } },
 y: { beginAtZero: true, grid: { color: 'transparent', drawBorder: false } }
+}
 }
 });
 }
@@ -1845,15 +2054,21 @@ if (limit) entries = entries.slice(0, limit);
 return { labels: entries.map((entry) => entry[0]), values: entries.map((entry) => entry[1]) };
 }
 
-function aggregateTimeline(rows) {
+function aggregateTimelineMonthly(rows) {
 const counts = {};
 rows.forEach((row) => {
 if (row.DATA_FECHAMENTO) {
-const key = row.DATA_FECHAMENTO.toISOString().split('T')[0];
+const keyDate = new Date(row.DATA_FECHAMENTO.getFullYear(), row.DATA_FECHAMENTO.getMonth(), 1);
+const key = keyDate.toISOString();
 counts[key] = (counts[key] || 0) + 1;
 }
 });
-return Object.entries(counts).map(([date, value]) => ({ x: new Date(date), y: value })).sort((a, b) => a.x - b.x);
+const entries = Object.entries(counts).map(([k, v]) => ({ date: new Date(k), value: v })).sort((a, b) => a.date - b.date);
+return {
+labels: entries.map(e => formatMonthLabel(e.date)),
+values: entries.map(e => e.value),
+dates: entries.map(e => e.date)
+};
 }
 
 function aggregateMonthly(rows) {
@@ -1869,6 +2084,45 @@ Object.entries(counts).sort((a, b) => monthToDate(a[0]) - monthToDate(b[0])).for
 result.labels.push(label); result.values.push(value);
 });
 return result;
+}
+
+function buildTrendSeries(values) {
+if (!values || values.length < 2) return null;
+const x = values.map((_, idx) => idx);
+let n = x.length, sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+for (let i = 0; i < n; i++) {
+sumX += x[i]; sumY += values[i]; sumXY += x[i] * values[i]; sumXX += x[i] * x[i];
+}
+const denom = (n * sumXX - sumX * sumX);
+if (denom === 0) return null;
+const b = (n * sumXY - sumX * sumY) / denom;
+const a = (sumY - b * sumX) / n;
+return x.map(xi => Math.round(a + b * xi));
+}
+
+function buildTimelineForecastSeries(series, monthsAhead = 3) {
+if (!series || !series.values || series.values.length < 2) return { labels: [], values: [] };
+const n = series.values.length;
+const x = series.values.map((_, idx) => idx);
+let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+for (let i = 0; i < n; i++) {
+sumX += x[i]; sumY += series.values[i]; sumXY += x[i] * series.values[i]; sumXX += x[i] * x[i];
+}
+const denom = (n * sumXX - sumX * sumX);
+if (denom === 0) return { labels: [], values: [] };
+const b = (n * sumXY - sumX * sumY) / denom;
+const a = (sumY - b * sumX) / n;
+const labels = [];
+const values = [];
+const lastDate = series.dates && series.dates.length ? series.dates[series.dates.length - 1] : new Date();
+for (let i = 1; i <= monthsAhead; i++) {
+const idx = n - 1 + i;
+const pred = Math.max(0, Math.round(a + b * idx));
+const nextDate = new Date(lastDate.getFullYear(), lastDate.getMonth() + i, 1);
+labels.push(formatMonthLabel(nextDate));
+values.push(pred);
+}
+return { labels, values };
 }
 
 function aggregateQuarterly(rows) {
@@ -2047,6 +2301,12 @@ function toInputDate(d) { if (!(d instanceof Date) || Number.isNaN(d.getTime()))
 function medianValue(v) { if (!v.length) return 0; const s = v.slice().sort((a, b) => a - b); const m = Math.floor(s.length / 2); return s.length % 2 === 0 ? (s[m - 1] + s[m]) / 2 : s[m]; }
 function shiftDays(d, n) { const c = new Date(d); c.setDate(c.getDate() - n); return c; }
 function truncate(t, l) { if (!t) return ''; return t.length <= l ? t : `${t.slice(0, l - 3)}...`; }
+function formatMonthLabel(dateObj) {
+if (!(dateObj instanceof Date) || Number.isNaN(dateObj.getTime())) return '';
+const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+const y = dateObj.getFullYear();
+return `${m}/${y}`;
+}
 function statusClass(s) {
 const n = normalize(s);
 if (n.includes('crit')) return 'status-chip bg-red-100 text-red-700';
@@ -2065,6 +2325,100 @@ const t = new Date().toLocaleTimeString();
 const e = `[${t}] ${m}`;
 console.log(e);
 if (UI.debugOutput) { UI.debugOutput.innerHTML += `${escapeHtml(e)}<br />`; UI.debugOutput.scrollTop = UI.debugOutput.scrollHeight; }
+}
+
+// --- ENGINE MATEMÁTICA PREDITIVA ---
+
+/**
+ * Resolve regressão polinomial usando Mínimos Quadrados.
+ * Retorna coeficientes, string da fórmula, r2 e erro padrão.
+ */
+function calculateAdvancedRegression(xData, yData, degree) {
+    const n = xData.length;
+    if (n < degree + 1) return null;
+
+    const sigmaX = new Array(2 * degree + 1).fill(0);
+    for (let i = 0; i < 2 * degree + 1; i++) {
+        sigmaX[i] = xData.reduce((sum, xi) => sum + Math.pow(xi, i), 0);
+    }
+
+    const sigmaXY = new Array(degree + 1).fill(0);
+    for (let i = 0; i < degree + 1; i++) {
+        sigmaXY[i] = xData.reduce((sum, xi, idx) => sum + Math.pow(xi, i) * yData[idx], 0);
+    }
+
+    const matrix = [];
+    const rhs = [];
+    for (let i = 0; i <= degree; i++) {
+        const row = [];
+        for (let j = 0; j <= degree; j++) {
+            row.push(sigmaX[i + j]);
+        }
+        matrix.push(row);
+        rhs.push(sigmaXY[i]);
+    }
+
+    const coeffs = solveLinearSystem(matrix, rhs);
+    if (!coeffs) return null;
+
+    const yPred = xData.map(xi => predictPoly(xi, coeffs));
+    
+    const yMean = yData.reduce((a, b) => a + b, 0) / n;
+    const ssTot = yData.reduce((sum, yi) => sum + Math.pow(yi - yMean, 2), 0);
+    const ssRes = yData.reduce((sum, yi, i) => sum + Math.pow(yi - yPred[i], 2), 0);
+    const r2 = ssTot === 0 ? 0 : 1 - (ssRes / ssTot);
+
+    const dof = Math.max(1, n - (degree + 1));
+    const stdErr = Math.sqrt(ssRes / dof);
+
+    return { coeffs, r2, stdErr, degree };
+}
+
+function predictPoly(x, coeffs) {
+    return coeffs.reduce((sum, coeff, power) => sum + coeff * Math.pow(x, power), 0);
+}
+
+function solveLinearSystem(A, B) {
+    const n = A.length;
+    for (let i = 0; i < n; i++) {
+        let maxRow = i;
+        for (let k = i + 1; k < n; k++) {
+            if (Math.abs(A[k][i]) > Math.abs(A[maxRow][i])) maxRow = k;
+        }
+        [A[i], A[maxRow]] = [A[maxRow], A[i]];
+        [B[i], B[maxRow]] = [B[maxRow], B[i]];
+
+        for (let k = i + 1; k < n; k++) {
+            const factor = A[k][i] / A[i][i];
+            B[k] -= factor * B[i];
+            for (let j = i; j < n; j++) {
+                A[k][j] -= factor * A[i][j];
+            }
+        }
+    }
+    const x = new Array(n).fill(0);
+    for (let i = n - 1; i >= 0; i--) {
+        let sum = 0;
+        for (let j = i + 1; j < n; j++) {
+            sum += A[i][j] * x[j];
+        }
+        x[i] = (B[i] - sum) / A[i][i];
+    }
+    return x;
+}
+
+function formatPolyEquation(coeffs) {
+    let html = "y = ";
+    for (let i = coeffs.length - 1; i >= 0; i--) {
+        const val = coeffs[i];
+        if (Math.abs(val) < 0.0001) continue;
+        const sign = val >= 0 ? (i === coeffs.length - 1 ? "" : " + ") : " - ";
+        const num = Math.abs(val).toFixed(2);
+        if (i === 0) html += `${sign}${num}`;
+        else if (i === 1) html += `${sign}${num}x`;
+        else html += `${sign}${num}x<sup>${i}</sup>`;
+    }
+    return html || "y = 0";
 }
 </script>
 </body>
