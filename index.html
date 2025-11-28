@@ -605,6 +605,24 @@ Ajuste o período, status, especialidades ou busque termos livres.
 </div>
 </div>
 
+<!-- Yamazumi -->
+<div class="dash-card p-6 lg:col-span-2">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-xl font-bold gradient-text">
+<i class="fas fa-layer-group mr-2"></i>Yamazumi: Status por Mês
+</h3>
+</div>
+<p class="text-sm text-gray-500 mb-2">Barra empilhada para visualizar a carga mensal por tempo de resolução.</p>
+<div class="chart-container" style="height: 320px;">
+<canvas id="yamazumi-chart"></canvas>
+</div>
+        <button class="expand-btn" aria-label="Ampliar gráfico Yamazumi"><i class="fas fa-expand"></i></button>
+        <button class="info-btn" aria-label="Informações do Yamazumi"><i class="fas fa-info"></i></button>
+        <div class="info-tooltip">
+        <h5>Yamazumi</h5> Empilha os tempos de resolução (1 dia, 2 dias...) por mês, mostrando onde estão os casos que levam mais tempo.
+        </div>
+        </div>
+
 <!-- Quadrante Especialidades -->
 <div class="dash-card p-6 lg:col-span-2">
 <div class="flex items-center justify-between mb-4">
@@ -1296,7 +1314,8 @@ hourlyData: aggregateHourly(rows),
 resolutionTimeData: aggregateResolutionTime(rows),
 funnelData: aggregateFunnel(rows),
 pendingDaysData: aggregatePendingDays(rows),
-statusBySpecialtyData: aggregateStatusBySpecialty(rows)
+statusBySpecialtyData: aggregateStatusBySpecialty(rows),
+yamazumiData: aggregateYamazumi(rows)
 };
 }
 
@@ -1433,6 +1452,7 @@ state.charts.resolutionTime = createBar('resolution-time-chart', metrics.resolut
 state.charts.funnel = createBar('funnel-chart', metrics.funnelData, chartPalette.slice(0, 4), 'y');
 state.charts.pendingDays = createBar('pending-days-chart', metrics.pendingDaysData, [chartPalette[4]], 'x');
 state.charts.statusBySpecialty = createStackedBar('status-by-specialty-chart', metrics.statusBySpecialtyData);
+state.charts.yamazumi = createStackedBar('yamazumi-chart', metrics.yamazumiData);
 
 const quadrantData = aggregateSpecialtyQuadrant(state.filtered);
 state.charts.quadrant = createQuadrantChart('quadrant-chart', quadrantData);
@@ -1450,6 +1470,7 @@ findAndAttachExpand('quadrant-chart', 'quadrant', 'Análise de Quadrante');
 findAndAttachExpand('funnel-chart', 'funnel', 'Funil de Status');
 findAndAttachExpand('pending-days-chart', 'pendingDays', 'Distribuição de Dias Pendentes');
 findAndAttachExpand('status-by-specialty-chart', 'statusBySpecialty', 'Status por Especialidade (Top 10)');
+findAndAttachExpand('yamazumi-chart', 'yamazumi', 'Yamazumi: Tempo de Resolução por Mês');
 }
 
 function findAndAttachExpand(canvasId, chartKey, title) {
@@ -1723,16 +1744,17 @@ x: { ticks: { autoSkip: false, maxRotation: 45 }, grid: { display: false } }
 function createTimeline(id, data, trendData = null) {
 const canvas = document.getElementById(id);
 if (!canvas) return null;
+const mainData = data.map(p => ({ x: p.x, y: p.y }));
 const datasets = [{
-label: 'Atendimentos', data, borderColor: chartPalette[0], backgroundColor: hexToRgba(chartPalette[0], 0.1),
+label: 'Atendimentos', data: mainData, borderColor: chartPalette[0], backgroundColor: hexToRgba(chartPalette[0], 0.1),
 fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: chartPalette[0], pointBorderColor: '#fff', pointBorderWidth: 2,
-parsing: { xAxisKey: 'x', yAxisKey: 'y' }
+parsing: false, spanGaps: true
 }];
 if (trendData) {
 datasets.push({
-label: 'Tendência', data: trendData, type: 'line', borderColor: '#f97316', backgroundColor: 'transparent',
+label: 'Tendência', data: trendData.map(p => ({ x: p.x, y: p.y })), type: 'line', borderColor: '#f97316', backgroundColor: 'transparent',
 borderWidth: 2, borderDash: [5, 5], pointRadius: 0, fill: false, tension: 0,
-parsing: { xAxisKey: 'x', yAxisKey: 'y' }
+parsing: false, spanGaps: true
 });
 }
 return new Chart(canvas, {
@@ -1908,6 +1930,39 @@ if (desfecho.includes('ACEITO') || desfecho.includes('CONCLU') || desfecho.inclu
 return Object.entries(specialtyData)
 .map(([name, data]) => ({ x: data.total, y: (data.total > 0) ? (data.positivos / data.total) * 100 : 0, label: name, size: data.total }))
 .filter(d => d.x >= 5);
+}
+
+function aggregateYamazumi(rows) {
+const monthMap = new Map();
+const bucketCounts = {};
+
+rows.forEach(row => {
+if (!row.DATA_FECHAMENTO || row.TEMPO_CONCLUSAO === null || !Number.isFinite(row.TEMPO_CONCLUSAO)) return;
+let label = row.MES_ANO;
+if (!label) label = `${String(row.DATA_FECHAMENTO.getMonth() + 1).padStart(2, '0')}/${row.DATA_FECHAMENTO.getFullYear()}`;
+const dias = Math.max(0, Math.ceil(row.TEMPO_CONCLUSAO));
+let bucket = '5+ dias';
+if (dias <= 1) bucket = '1 dia';
+else if (dias === 2) bucket = '2 dias';
+else if (dias === 3) bucket = '3 dias';
+else if (dias === 4) bucket = '4 dias';
+if (!monthMap.has(label)) monthMap.set(label, {});
+const monthBucket = monthMap.get(label);
+monthBucket[bucket] = (monthBucket[bucket] || 0) + 1;
+bucketCounts[bucket] = (bucketCounts[bucket] || 0) + 1;
+});
+
+const months = Array.from(monthMap.keys()).sort((a, b) => monthToDate(a) - monthToDate(b));
+const bucketsOrder = ['1 dia', '2 dias', '3 dias', '4 dias', '5+ dias'].filter(b => bucketCounts[b]);
+if (!bucketsOrder.length) return { labels: months, datasets: [] };
+const colors = ['#10b981', '#0ea5e9', '#f97316', '#f59e0b', '#ef4444'];
+const datasets = bucketsOrder.map((bucket, idx) => ({
+label: bucket,
+data: months.map(m => (monthMap.get(m)?.[bucket] || 0)),
+backgroundColor: colors[idx % colors.length]
+}));
+
+return { labels: months, datasets };
 }
 
 function aggregateFunnel(rows) {
