@@ -1725,17 +1725,19 @@ const canvas = document.getElementById(id);
 if (!canvas) return null;
 const datasets = [{
 label: 'Atendimentos', data, borderColor: chartPalette[0], backgroundColor: hexToRgba(chartPalette[0], 0.1),
-fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: chartPalette[0], pointBorderColor: '#fff', pointBorderWidth: 2
+fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: chartPalette[0], pointBorderColor: '#fff', pointBorderWidth: 2,
+parsing: { xAxisKey: 'x', yAxisKey: 'y' }
 }];
 if (trendData) {
 datasets.push({
 label: 'Tendência', data: trendData, type: 'line', borderColor: '#f97316', backgroundColor: 'transparent',
-borderWidth: 2, borderDash: [5, 5], pointRadius: 0, fill: false, tension: 0
+borderWidth: 2, borderDash: [5, 5], pointRadius: 0, fill: false, tension: 0,
+parsing: { xAxisKey: 'x', yAxisKey: 'y' }
 });
 }
 return new Chart(canvas, {
 type: 'line', data: { datasets: datasets },
-options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'bottom' } } },
+options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'bottom' }, tooltip: { callbacks: { label: (ctx) => { const v = ctx.parsed.y ?? 0; return `${ctx.dataset.label}: ${formatNumber(v)}`; } } } } },
 scales: {
 x: { type: 'time', time: { unit: 'day', tooltipFormat: 'dd/MM/yyyy', displayFormats: { day: 'dd/MM' } }, grid: { color: '#e2e8f0', drawBorder: false } },
 y: { beginAtZero: true, grid: { color: 'transparent', drawBorder: false } }
@@ -1775,11 +1777,26 @@ if (d.x >= avgX && d.y < avgY) return hexToRgba(chartPalette[4], 0.7);
 if (d.x < avgX && d.y >= avgY) return hexToRgba(chartPalette[0], 0.7);
 return hexToRgba(chartPalette[5], 0.7);
 }),
-pointRadius: data.map(d => Math.max(5, Math.sqrt(d.size) * 1.5))
+pointRadius: data.map(d => Math.max(5, Math.sqrt(d.size) * 1.5)),
+hoverRadius: data.map(d => Math.max(6, Math.sqrt(d.size) * 1.8)),
+parsing: { xAxisKey: 'x', yAxisKey: 'y' }
 }]
 },
 options: {
-responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+responsive: true, maintainAspectRatio: false,
+plugins: {
+legend: { display: false },
+tooltip: {
+callbacks: {
+label: (ctx) => {
+const raw = ctx.raw || {};
+const volume = formatNumber(raw.x || 0);
+const efet = formatDecimal(raw.y || 0) + '%';
+return `${raw.label || 'N/A'} • Volume: ${volume} • Efetividade: ${efet}`;
+}
+}
+}
+},
 scales: { x: { title: { display: true, text: 'Volume' } }, y: { title: { display: true, text: 'Efetividade (%)' }, min: 0, max: 100 } }
 }
 });
