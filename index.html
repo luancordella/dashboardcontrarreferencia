@@ -1,262 +1,256 @@
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Dashboard Contrarreferência</title>
+<title>Dashboard Contrarreferência - Completo</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<!-- Chart.js para os gráficos originais -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+
+<!-- Plotly.js para os novos gráficos avançados (Sankey, Heatmap) -->
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+
 <style>
 body {
-font-family: 'Inter', sans-serif;
-background: #f1f5f9; /* Fundo Slate-100 (cinza-azulado claro) */
-color: #0f172a; /* Texto Slate-900 */
-min-height: 100vh;
+    font-family: 'Inter', sans-serif;
+    background: #f1f5f9;
+    color: #0f172a;
+    min-height: 100vh;
 }
 /* O "glass-card" agora é um "dash-card" limpo e moderno */
 .dash-card {
-background: #ffffff;
-border: 1px solid #e2e8f0; /* Slate-200 */
-box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.05);
-border-radius: 1rem;
-transition: all 0.3s ease;
-position: relative; /* Para ancorar os botões */
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.05);
+    border-radius: 1rem;
+    transition: all 0.3s ease;
+    position: relative;
 }
 .dash-card:hover {
-box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.07);
+    box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.07);
 }
 .loader {
-border: 4px solid rgba(0, 0, 0, 0.1);
-border-top: 4px solid #0d9488; /* Teal-700 */
-border-radius: 50%;
-width: 60px;
-height: 60px;
-animation: spin 1s linear infinite;
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-top: 4px solid #0d9488;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 1s linear infinite;
 }
 @keyframes spin {
-0% { transform: rotate(0deg); }
-100% { transform: rotate(360deg); }
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
-/* Botões de filtro rápido - estilo "hospitalar" limpo */
+/* Botões de filtro rápido */
 .quick-filter {
-display: inline-flex;
-align-items: center;
-gap: 0.45rem;
-background: #ffffff;
-border: 1px solid #cbd5e1; /* Slate-300 */
-color: #334155; /* Slate-700 */
-font-weight: 600;
-padding: 0.55rem 1rem;
-border-radius: 999px;
-transition: all 0.3s ease;
-box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.03);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+    font-weight: 600;
+    padding: 0.55rem 1rem;
+    border-radius: 999px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.03);
 }
 .quick-filter:hover {
-transform: translateY(-2px);
-border-color: #94a3b8; /* Slate-400 */
+    transform: translateY(-2px);
+    border-color: #94a3b8;
 }
 .quick-filter.active {
-background: linear-gradient(135deg, #0d9488, #0284c7);
-color: #fff;
-border-color: transparent;
-box-shadow: 0 4px 15px 0 rgba(13, 148, 136, 0.25);
+    background: linear-gradient(135deg, #0d9488, #0284c7);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 4px 15px 0 rgba(13, 148, 136, 0.25);
 }
-/* Chips de Status com cores novas */
+/* Chips de Status */
 .status-chip {
-display: inline-flex;
-align-items: center;
-justify-content: center;
-min-width: 90px;
-padding: 0.25rem 0.75rem;
-border-radius: 999px;
-font-size: 0.75rem;
-font-weight: 600;
-letter-spacing: 0.02em;
-text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 90px;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
 }
-/* Insight cards com novo estilo */
+/* Insight cards */
 .insight-card {
-background: linear-gradient(135deg, rgba(13, 148, 136, 0.05), rgba(2, 132, 199, 0.05));
-border: 1px solid rgba(13, 148, 136, 0.1);
-border-radius: 1rem;
-padding: 1rem;
-transition: all 0.3s ease;
+    background: linear-gradient(135deg, rgba(13, 148, 136, 0.05), rgba(2, 132, 199, 0.05));
+    border: 1px solid rgba(13, 148, 136, 0.1);
+    border-radius: 1rem;
+    padding: 1rem;
+    transition: all 0.3s ease;
 }
 .insight-card:hover {
-transform: translateY(-4px);
-box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
 }
-/* Destaque superior do KPI com o novo gradiente */
+/* Destaque superior do KPI */
 .kpi-card {
-position: relative;
-overflow: hidden;
+    position: relative;
+    overflow: hidden;
 }
 .kpi-card::before {
-content: '';
-position: absolute;
-top: 0;
-left: 0;
-right: 0;
-height: 4px;
-background: linear-gradient(90deg, #0d9488, #0284c7); /* Teal-700 to Sky-600 */
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #0d9488, #0284c7);
 }
 .filter-panel {
-transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-max-height: 2000px;
-overflow: hidden;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    max-height: 2000px;
+    overflow: hidden;
 }
 .filter-panel.collapsed {
-max-height: 0;
-opacity: 0;
-margin-top: 0;
-margin-bottom: 0;
+    max-height: 0;
+    opacity: 0;
+    margin-top: 0;
+    margin-bottom: 0;
 }
 .chart-container {
-position: relative;
-height: 300px;
-width: 100%;
+    position: relative;
+    height: 300px;
+    width: 100%;
 }
 table {
-width: 100%;
-min-width: 980px;
-border-collapse: separate;
-border-spacing: 0;
+    width: 100%;
+    min-width: 980px;
+    border-collapse: separate;
+    border-spacing: 0;
 }
 thead th {
-position: sticky;
-top: 0;
-background: #f8fafc; /* Slate-50 */
-text-transform: uppercase;
-font-size: 0.75rem;
-letter-spacing: 0.04em;
-color: #0d9488; /* Teal-700 */
+    position: sticky;
+    top: 0;
+    background: #f8fafc;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    color: #0d9488;
 }
 tbody tr:nth-child(even) {
-background: rgba(13, 148, 136, 0.03); /* Fundo de linha levemente teal */
+    background: rgba(13, 148, 136, 0.03);
 }
 tbody tr:hover {
-background: rgba(2, 132, 199, 0.07); /* Fundo de linha hover sky */
+    background: rgba(2, 132, 199, 0.07);
 }
-/* Gradiente de texto com as novas cores */
+/* Gradiente de texto */
 .gradient-text {
-background: linear-gradient(90deg, #0d9488, #0284c7);
--webkit-background-clip: text;
-background-clip: text;
-color: transparent;
-font-weight: 700;
+    background: linear-gradient(90deg, #0d9488, #0284c7);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-weight: 700;
 }
-/* Botões principais com o novo gradiente */
+/* Botões principais */
 .main-btn, .toggle-btn, .fab {
-background: linear-gradient(135deg, #0d9488, #0284c7); /* Teal-700 to Sky-600 */
-color: white;
-border: none;
-padding: 0.5rem 1rem;
-border-radius: 0.5rem;
-font-weight: 600;
-cursor: pointer;
-transition: all 0.3s ease;
-box-shadow: 0 4px 15px 0 rgba(13, 148, 136, 0.2);
+    background: linear-gradient(135deg, #0d9488, #0284c7);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px 0 rgba(13, 148, 136, 0.2);
 }
 .main-btn:hover, .toggle-btn:hover, .fab:hover {
-transform: translateY(-2px);
-box-shadow: 0 6px 20px 0 rgba(13, 148, 136, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px 0 rgba(13, 148, 136, 0.3);
 }
 .fab {
-position: fixed;
-bottom: 2rem;
-right: 2rem;
-width: 56px;
-height: 56px;
-border-radius: 50%;
-display: flex;
-align-items: center;
-justify-content: center;
-z-index: 1000;
-padding: 0; /* Reset padding */
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 0;
 }
 
-/* NOVO: Estilos do Botão de Info, Expandir e Tooltip (posicionados em baixo) */
+/* Tooltips e Botões de Info */
 .info-btn, .expand-btn {
-position: absolute;
-bottom: 1rem; /* POSIÇÃO INFERIOR */
-width: 24px;
-height: 24px;
-background: #f1f5f9; /* slate-100 */
-color: #64748b; /* slate-500 */
-border: none;
-border-radius: 50%;
-font-weight: 700;
-font-size: 0.75rem; /* Tamanho do ícone */
-transition: all 0.2s ease;
-z-index: 10;
-display: flex;
-align-items: center;
-justify-content: center;
+    position: absolute;
+    bottom: 1rem;
+    width: 24px;
+    height: 24px;
+    background: #f1f5f9;
+    color: #64748b;
+    border: none;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 0.75rem;
+    transition: all 0.2s ease;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
-.info-btn {
-right: 1rem;
-cursor: help;
-}
-.expand-btn {
-right: 3rem; /* Ao lado do info-btn */
-cursor: pointer;
-}
+.info-btn { right: 1rem; cursor: help; }
+.expand-btn { right: 3rem; cursor: pointer; }
 .info-btn:hover, .expand-btn:hover {
-background: #0d9488; /* teal-700 */
-color: #ffffff;
-transform: scale(1.1);
+    background: #0d9488;
+    color: #ffffff;
+    transform: scale(1.1);
 }
 .info-tooltip {
-display: none; /* Escondido por padrão */
-position: absolute;
-bottom: 2.5rem; /* ACIMA do botão */
-right: 1rem;
-width: 300px;
-background: #ffffff;
-border: 1px solid #e2e8f0; /* slate-200 */
-border-radius: 0.75rem;
-box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-padding: 1rem;
-z-index: 20;
-font-size: 0.875rem;
-color: #334155; /* slate-700 */
-line-height: 1.6;
+    display: none;
+    position: absolute;
+    bottom: 2.5rem;
+    right: 1rem;
+    width: 300px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    padding: 1rem;
+    z-index: 20;
+    font-size: 0.875rem;
+    color: #334155;
+    line-height: 1.6;
 }
-/* Correção para o tooltip do quadrante, que pode ser mais largo */
-#quadrant-chart-tooltip {
-width: 380px;
-right: 1rem;
-}
-
 .info-btn:hover + .info-tooltip,
 .info-tooltip:hover {
-display: block;
+    display: block;
 }
 .info-tooltip h5 {
-font-weight: 700;
-color: #0d9488; /* teal-700 */
-margin-bottom: 0.5rem;
-}
-.info-tooltip ul {
-list-style-position: inside;
-margin-top: 0.5rem;
-margin-bottom: 0.5rem;
-}
-.info-tooltip li {
-margin-bottom: 0.25rem;
+    font-weight: 700;
+    color: #0d9488;
+    margin-bottom: 0.5rem;
 }
 
-
-/* Estilos do Modal de Gráfico */
+/* Modal */
 #chart-modal {
-transition: opacity 0.3s ease, visibility 0.3s ease;
-opacity: 0;
-visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    opacity: 0;
+    visibility: hidden;
 }
 #chart-modal.show {
-opacity: 1;
-visibility: visible;
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Plotly overrides para esconder barra de ferramentas intrusiva */
+.js-plotly-plot .plotly .modebar {
+    left: 0 !important;
+    right: auto !important;
 }
 </style>
 </head>
@@ -285,7 +279,7 @@ class="hidden main-btn px-6 py-3 rounded-xl font-semibold transition-all shadow-
 <div id="url-input-section" class="dash-card p-8 mb-8">
 <h2 class="text-2xl font-bold gradient-text mb-2"><i class="fas fa-cog mr-2"></i>Configuração da fonte</h2>
 <p class="text-sm text-gray-500 mb-6">
-Cole a URL pública do Web App (Google Apps Script) responsável por expor a planilha de atendimentos.
+Cole a URL pública do Web App (Google Apps Script).
 </p>
 <div class="flex flex-col md:flex-row gap-4 mb-4">
 <input
@@ -340,7 +334,7 @@ class="bg-gray-900 text-gray-100 rounded-lg p-4 text-xs font-mono max-h-60 overf
 <div>
 <h2 class="text-2xl font-bold gradient-text"><i class="fas fa-filter mr-2"></i>Filtros dinâmicos</h2>
 <p class="text-gray-600 text-sm mt-1">
-Ajuste o período, status, especialidades ou busque termos livres. Todos os gráficos e KPI são atualizados em tempo real.
+Ajuste o período, status, especialidades ou busque termos livres.
 </p>
 </div>
 <button id="toggle-filters" class="toggle-btn">
@@ -360,19 +354,17 @@ Ajuste o período, status, especialidades ou busque termos livres. Todos os grá
 </div>
 <div class="md:col-span-2 xl:col-span-2">
 <label for="filter-search" class="block text-sm font-semibold text-gray-600 mb-1">Busca rápida</label>
-<input type="text" id="filter-search" placeholder="Paciente, médico, status, desfecho ou qualquer palavra-chave..." class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-teal-500 focus:outline-none transition-colors" />
+<input type="text" id="filter-search" placeholder="Paciente, médico, status..." class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-teal-500 focus:outline-none transition-colors" />
 </div>
 </div>
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
 <div>
-<label for="filter-status" class="block text-sm font-semibold text-gray-600 mb-2">Status (multisseleção)</label>
-<select id="filter-status" multiple class="w-full border-2 border-gray-300 rounded-lg focus:border-teal-500 focus:outline-none transition-colors bg-white text-sm h-40"></select>
-<p class="text-xs text-gray-500 mt-1">Use Ctrl ou Shift para combinar diferentes status.</p>
+<label for="filter-status" class="block text-sm font-semibold text-gray-600 mb-2">Status</label>
+<select id="filter-status" multiple class="w-full border-2 border-gray-300 rounded-lg bg-white text-sm h-40"></select>
 </div>
 <div>
-<label for="filter-especialidade" class="block text-sm font-semibold text-gray-600 mb-2">Especialidade (multisseleção)</label>
-<select id="filter-especialidade" multiple class="w-full border-2 border-gray-300 rounded-lg focus:border-teal-500 focus:outline-none transition-colors bg-white text-sm h-40"></select>
-<p class="text-xs text-gray-500 mt-1">Combine com a busca livre para recortes mais específicos.</p>
+<label for="filter-especialidade" class="block text-sm font-semibold text-gray-600 mb-2">Especialidade</label>
+<select id="filter-especialidade" multiple class="w-full border-2 border-gray-300 rounded-lg bg-white text-sm h-40"></select>
 </div>
 </div>
 <div class="flex flex-wrap items-center gap-3 mt-6">
@@ -381,8 +373,8 @@ Ajuste o período, status, especialidades ou busque termos livres. Todos os grá
 <button id="quick-last-90" class="quick-filter"><i class="fas fa-chart-bar mr-2"></i>Últimos 90 dias</button>
 <button id="quick-current-trimester" class="quick-filter"><i class="fas fa-folder-open mr-2"></i>Trimestre recente</button>
 <div class="flex items-center gap-2 ml-auto">
-<button id="reset-filters" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:border-teal-500 hover:text-teal-600 transition"><i class="fas fa-times mr-2"></i>Limpar filtros</button>
-<button id="download-csv" class="px-4 py-2 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-semibold rounded-lg shadow hover:from-emerald-600 hover:to-cyan-600 transition"><i class="fas fa-file-csv mr-2"></i>Exportar CSV</button>
+<button id="reset-filters" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:border-teal-500">Limpar</button>
+<button id="download-csv" class="px-4 py-2 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-semibold rounded-lg shadow">Exportar CSV</button>
 </div>
 </div>
 <div id="filter-chips" class="flex flex-wrap gap-2 mt-4 text-sm text-gray-600"></div>
@@ -394,24 +386,20 @@ Ajuste o período, status, especialidades ou busque termos livres. Todos os grá
 <div class="dash-card p-6 kpi-card">
 <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Total</h3>
 <p id="kpi-total" class="text-4xl font-bold gradient-text mt-1">0</p>
-<p class="text-sm text-gray-500">Registros exibidos</p>
-<p class="text-xs text-gray-500 mt-3">Cobertura atual: <span id="kpi-total-percent">0%</span> da base carregada.</p>
+<p class="text-xs text-gray-500 mt-3">Cobertura: <span id="kpi-total-percent">0%</span></p>
 </div>
 <div class="dash-card p-6 kpi-card">
 <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Média de dias pendentes</h3>
 <p id="kpi-avg" class="text-4xl font-bold text-teal-700 mt-1">0</p>
-<p class="text-sm text-gray-500">Tempo médio em aberto</p>
 </div>
 <div class="dash-card p-6 kpi-card">
 <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Críticos</h3>
 <p id="kpi-criticos" class="text-4xl font-bold text-red-600 mt-1">0</p>
-<p class="text-sm text-gray-500">Entradas prioritárias</p>
-<p class="text-xs text-gray-500 mt-3">Equivale a <span id="kpi-criticos-percent">0%</span> dos filtrados.</p>
+<p class="text-xs text-gray-500 mt-3">Equivale a <span id="kpi-criticos-percent">0%</span></p>
 </div>
 <div class="dash-card p-6 kpi-card">
 <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Taxa de conclusão</h3>
 <p id="kpi-taxa" class="text-4xl font-bold text-blue-600 mt-1">0%</p>
-<p class="text-sm text-gray-500">Desfechos positivos vs total</p>
 </div>
 </div>
 
@@ -420,134 +408,106 @@ Ajuste o período, status, especialidades ou busque termos livres. Todos os grá
 <div class="dash-card p-6 kpi-card">
 <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Mediana de dias</h3>
 <p id="kpi-median" class="text-3xl font-bold gradient-text mt-1">0</p>
-<p class="text-sm text-gray-500">50% dos casos encerram abaixo</p>
 </div>
 <div class="dash-card p-6 kpi-card">
 <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Maior tempo pendente</h3>
 <p id="kpi-max" class="text-3xl font-bold gradient-text mt-1">0</p>
-<p class="text-sm text-gray-500">Recorde no recorte atual</p>
 </div>
 <div class="dash-card p-6 kpi-card">
 <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Tempo médio de conclusão</h3>
 <p id="kpi-conclusao" class="text-3xl font-bold text-teal-700 mt-1">0</p>
-<p class="text-sm text-gray-500">Entre abertura e finalização</p>
 </div>
-<!-- KPI de Duplicados removido pois agora são filtrados na origem -->
 <div class="dash-card p-6 kpi-card">
 <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Base Carregada</h3>
 <p id="kpi-base-total" class="text-3xl font-bold gradient-text mt-1">0</p>
-<p class="text-sm text-gray-500">Total de registros (sem duplicados)</p>
 </div>
 </div>
 
-<!-- GRÁFICOS (Layout com 2 colunas) -->
+<!-- GRÁFICOS ORIGINAIS (Layout com 2 colunas) -->
+<h2 class="text-2xl font-bold gradient-text mb-4 pl-2 border-l-4 border-sky-500">Indicadores Gerais</h2>
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
 <!-- Status -->
 <div class="dash-card p-6">
 <div class="flex items-center justify-between mb-4">
 <h3 class="text-xl font-bold gradient-text"><i class="fas fa-chart-pie mr-2"></i>Status dos atendimentos</h3>
-<span class="text-sm text-gray-500">Distribuição percentual</span>
 </div>
 <div class="chart-container">
 <canvas id="status-chart"></canvas>
 </div>
 <button class="expand-btn" aria-label="Ampliar gráfico"><i class="fas fa-expand"></i></button>
-<button class="info-btn" aria-label="Informações do gráfico"><i class="fas fa-info"></i></button>
+<button class="info-btn" aria-label="Informações"><i class="fas fa-info"></i></button>
 <div class="info-tooltip">
-<h5>Status dos Atendimentos</h5>
-<strong>O que mostra:</strong> A distribuição percentual de todos os atendimentos filtrados, agrupados pelo seu status atual (Ex: NORMAL, PENDENTE, CRÍTICO).
-<br/><br/>
-<strong>Extração:</strong> Contagem de cada item na coluna `STATUS`.
+<h5>Status</h5> Distribuição percentual de todos os atendimentos filtrados.
 </div>
 </div>
 <!-- Desfechos -->
 <div class="dash-card p-6">
 <div class="flex items-center justify-between mb-4">
 <h3 class="text-xl font-bold gradient-text"><i class="fas fa-tasks mr-2"></i>Desfechos</h3>
-<span class="text-sm text-gray-500">Principais resultados</span>
 </div>
 <div class="chart-container">
 <canvas id="desfecho-chart"></canvas>
 </div>
 <button class="expand-btn" aria-label="Ampliar gráfico"><i class="fas fa-expand"></i></button>
-<button class="info-btn" aria-label="Informações do gráfico"><i class="fas fa-info"></i></button>
+<button class="info-btn" aria-label="Informações do gráfico de desfechos"><i class="fas fa-info"></i></button>
 <div class="info-tooltip">
-<h5>Desfechos</h5>
-<strong>O que mostra:</strong> Os 10 principais resultados (desfechos) dos atendimentos, como 'ACEITO', 'CONCLUÍDO', 'NEGADO', etc. (Exclui 'DUPLICADO').
-<br/><br/>
-<strong>Extração:</strong> Contagem dos 10 itens mais comuns na coluna `DESFECHO`.
+<h5>Desfechos</h5> Distribuição dos resultados finais (alta, aceito, obito etc.) dos atendimentos filtrados.
 </div>
 </div>
 <!-- Especialidades -->
 <div class="dash-card p-6">
 <div class="flex items-center justify-between mb-4">
 <h3 class="text-xl font-bold gradient-text"><i class="fas fa-stethoscope mr-2"></i>Top especialidades</h3>
-<span class="text-sm text-gray-500">Top 10 do período</span>
 </div>
 <div class="chart-container">
 <canvas id="especialidade-chart"></canvas>
 </div>
 <button class="expand-btn" aria-label="Ampliar gráfico"><i class="fas fa-expand"></i></button>
-<button class="info-btn" aria-label="Informações do gráfico"><i class="fas fa-info"></i></button>
+<button class="info-btn" aria-label="Informações das especialidades"><i class="fas fa-info"></i></button>
 <div class="info-tooltip">
-<h5>Top Especialidades</h5>
-<strong>O que mostra:</strong> As 10 especialidades mais acionadas (com mais atendimentos) dentro do período e filtros selecionados.
-<br/><br/>
-<strong>Extração:</strong> Contagem dos 10 itens mais comuns na coluna `ESPECIALIDADE`.
+<h5>Especialidades</h5> Top 10 especialidades com maior volume de atendimentos no período filtrado.
 </div>
 </div>
 <!-- Pareto Médicos -->
 <div class="dash-card p-6">
 <div class="flex items-center justify-between mb-4">
 <h3 class="text-xl font-bold gradient-text"><i class="fas fa-user-md mr-2"></i>Pareto - médicos</h3>
-<span class="text-sm text-gray-500">Top 10 profissionais</span>
 </div>
 <div class="chart-container">
 <canvas id="pareto-chart"></canvas>
 </div>
 <button class="expand-btn" aria-label="Ampliar gráfico"><i class="fas fa-expand"></i></button>
-<button class="info-btn" aria-label="Informações do gráfico"><i class="fas fa-info"></i></button>
+<button class="info-btn" aria-label="Informações do Pareto"><i class="fas fa-info"></i></button>
 <div class="info-tooltip">
-<h5>Pareto - Médicos</h5>
-<strong>O que mostra:</strong> Os 10 médicos com mais atendimentos (barras) e o percentual acumulado que eles representam do total (linha).
-<br/><br/>
-<strong>Extração:</strong> Contagem dos 10 itens mais comuns na coluna `MEDICO`.
+<h5>Pareto</h5> Ordena médicos por volume e mostra percentual acumulado (regra 80/20) para identificar concentradores.
 </div>
 </div>
 <!-- Evolução Diária -->
 <div class="dash-card p-6">
 <div class="flex items-center justify-between mb-4">
 <h3 class="text-xl font-bold gradient-text"><i class="fas fa-chart-line mr-2"></i>Evolução diária & Tendência</h3>
-<span class="text-sm text-gray-500">Atendimentos por data</span>
 </div>
 <div class="chart-container">
 <canvas id="timeline-chart"></canvas>
 </div>
 <button class="expand-btn" aria-label="Ampliar gráfico"><i class="fas fa-expand"></i></button>
-<button class="info-btn" aria-label="Informações do gráfico"><i class="fas fa-info"></i></button>
+<button class="info-btn" aria-label="Informações da evolução diária"><i class="fas fa-info"></i></button>
 <div class="info-tooltip">
-<h5>Evolução Diária & Tendência</h5>
-<strong>O que mostra:</strong> O volume de atendimentos abertos por dia. A linha pontilhada laranja mostra a tendência (regressão linear) de crescimento ou queda.
-<br/><br/>
-<strong>Extração:</strong> Contagem de atendimentos agrupados por `DATA_FECHAMENTO`.
+<h5>Evolução diária</h5> Série temporal de atendimentos fechados por dia, com linha de tendência para indicar direção.
 </div>
 </div>
 <!-- Distribuição Mensal -->
 <div class="dash-card p-6">
 <div class="flex items-center justify-between mb-4">
 <h3 class="text-xl font-bold gradient-text"><i class="fas fa-calendar-alt mr-2"></i>Distribuição mensal</h3>
-<span class="text-sm text-gray-500">Mês/ano</span>
 </div>
 <div class="chart-container">
 <canvas id="monthly-chart"></canvas>
 </div>
 <button class="expand-btn" aria-label="Ampliar gráfico"><i class="fas fa-expand"></i></button>
-<button class="info-btn" aria-label="Informações do gráfico"><i class="fas fa-info"></i></button>
+<button class="info-btn" aria-label="Informações da distribuição mensal"><i class="fas fa-info"></i></button>
 <div class="info-tooltip">
-<h5>Distribuição Mensal</h5>
-<strong>O que mostra:</strong> Contagem total de atendimentos agrupados por Mês/Ano, ordenados cronologicamente.
-<br/><br/>
-<strong>Extração:</strong> Contagem de atendimentos agrupados por `MES_ANO` (ou `DATA_FECHAMENTO` se `MES_ANO` falhar).
+<h5>Mensal</h5> Volume consolidado por mês/ano para ver sazonalidade e tendência macro.
 </div>
 </div>
 
@@ -555,54 +515,42 @@ Ajuste o período, status, especialidades ou busque termos livres. Todos os grá
 <div class="dash-card p-6">
 <div class="flex items-center justify-between mb-4">
 <h3 class="text-xl font-bold gradient-text"><i class="fas fa-calendar-check mr-2"></i>Por Trimestre</h3>
-<span class="text-sm text-gray-500">Distribuição trimestral</span>
 </div>
 <div class="chart-container">
 <canvas id="quarter-chart"></canvas>
 </div>
 <button class="expand-btn" aria-label="Ampliar gráfico"><i class="fas fa-expand"></i></button>
-<button class="info-btn" aria-label="Informações do gráfico"><i class="fas fa-info"></i></button>
+<button class="info-btn" aria-label="Informações por trimestre"><i class="fas fa-info"></i></button>
 <div class="info-tooltip">
-<h5>Por Trimestre</h5>
-<strong>O que mostra:</strong> A distribuição dos atendimentos pelos trimestres (T1, T2, T3, T4) definidos na planilha.
-<br/><br/>
-<strong>Extração:</strong> Contagem de atendimentos agrupados pela coluna `TRIMESTRE`.
+<h5>Trimestre</h5> Distribuição dos atendimentos agrupados por trimestre civil.
 </div>
 </div>
 <!-- Horário de Pico -->
 <div class="dash-card p-6">
 <div class="flex items-center justify-between mb-4">
 <h3 class="text-xl font-bold gradient-text"><i class="fas fa-clock mr-2"></i>Horário de Pico</h3>
-<span class="text-sm text-gray-500">Volume por hora do dia</span>
 </div>
 <div class="chart-container">
 <canvas id="hourly-chart"></canvas>
 </div>
 <button class="expand-btn" aria-label="Ampliar gráfico"><i class="fas fa-expand"></i></button>
-<button class="info-btn" aria-label="Informações do gráfico"><i class="fas fa-info"></i></button>
+<button class="info-btn" aria-label="Informações do horário de pico"><i class="fas fa-info"></i></button>
 <div class="info-tooltip">
-<h5>Horário de Pico</h5>
-<strong>O que mostra:</strong> O volume de atendimentos abertos em cada hora do dia (00:00 às 23:00), permitindo identificar os horários de maior demanda.
-<br/><br/>
-<strong>Extração:</strong> Contagem de atendimentos agrupados pelo componente "hora" da `HORA_FECHAMENTO`.
+<h5>Horário de Pico</h5> Distribuição por hora do dia para identificar janelas com maior entrada de casos.
 </div>
 </div>
 <!-- Tempo de Conclusão -->
 <div class="dash-card p-6">
 <div class="flex items-center justify-between mb-4">
 <h3 class="text-xl font-bold gradient-text"><i class="fas fa-hourglass-half mr-2"></i>Tempo de Conclusão</h3>
-<span class="text-sm text-gray-500">Faixas de dias p/ finalizar</span>
 </div>
 <div class="chart-container">
 <canvas id="resolution-time-chart"></canvas>
 </div>
 <button class="expand-btn" aria-label="Ampliar gráfico"><i class="fas fa-expand"></i></button>
-<button class="info-btn" aria-label="Informações do gráfico"><i class="fas fa-info"></i></button>
+<button class="info-btn" aria-label="Informações do tempo de conclusão"><i class="fas fa-info"></i></button>
 <div class="info-tooltip">
-<h5>Tempo de Conclusão</h5>
-<strong>O que mostra:</strong> O tempo (em dias) que os atendimentos *finalizados* levaram para serem concluídos, desde a abertura (`DATA_FECHAMENTO`) até a finalização (`DATA_FINALIZACAO`).
-<br/><br/>
-<strong>Extração:</strong> Cálculo de `DATA_FINALIZACAO` - `DATA_FECHAMENTO`, agrupado em faixas.
+<h5>Tempo de conclusão</h5> Agrupa atendimentos concluídos por faixas de dias entre abertura e finalização.
 </div>
 </div>
 
@@ -612,60 +560,48 @@ Ajuste o período, status, especialidades ou busque termos livres. Todos os grá
 <h3 class="text-xl font-bold gradient-text">
 <i class="fas fa-filter mr-2"></i>Funil de Status
 </h3>
-<span class="text-sm text-gray-500">Etapas principais</span>
 </div>
 <div class="chart-container" style="height: 300px;">
 <canvas id="funnel-chart"></canvas>
 </div>
 <button class="expand-btn" aria-label="Ampliar gráfico"><i class="fas fa-expand"></i></button>
-<button class="info-btn" aria-label="Informações do gráfico"><i class="fas fa-info"></i></button>
+<button class="info-btn" aria-label="Informações do funil de status"><i class="fas fa-info"></i></button>
 <div class="info-tooltip">
-<h5>Funil de Status</h5>
-<strong>O que mostra:</strong> Simula um funil de conversão, mostrando a passagem dos atendimentos por etapas-chave.
-<br/><br/>
-<strong>Extração:</strong> Contagem de `Total` -> `STATUS = NORMAL` -> `DESFECHO = ACEITO` -> `DESFECHO = CONCLUÍDO/ALTA`.
+<h5>Funil</h5> Mostra a queda progressiva de volume do total filtrado até status normal, aceitos e concluídos/alta.
 </div>
 </div>
 
-<!-- NOVO GRÁFICO: Dias Pendentes -->
+<!-- Dias Pendentes -->
 <div class="dash-card p-6">
 <div class="flex items-center justify-between mb-4">
 <h3 class="text-xl font-bold gradient-text">
 <i class="fas fa-calendar-times mr-2"></i>Distribuição de Dias Pendentes
 </h3>
-<span class="text-sm text-gray-500">Faixas de tempo em aberto</span>
 </div>
 <div class="chart-container" style="height: 300px;">
 <canvas id="pending-days-chart"></canvas>
 </div>
 <button class="expand-btn" aria-label="Ampliar gráfico"><i class="fas fa-expand"></i></button>
-<button class="info-btn" aria-label="Informações do gráfico"><i class="fas fa-info"></i></button>
+<button class="info-btn" aria-label="Informações de dias pendentes"><i class="fas fa-info"></i></button>
 <div class="info-tooltip">
-<h5>Distribuição de Dias Pendentes</h5>
-<strong>O que mostra:</strong> Quantos atendimentos (do total filtrado) estão em aberto dentro de cada faixa de tempo.
-<br/><br/>
-<strong>Extração:</strong> Contagem de atendimentos agrupados por faixas da coluna `DIAS_PENDENTE`.
+<h5>Dias pendentes</h5> Distribuição em faixas de dias que os casos permanecem abertos ou aguardando.
 </div>
 </div>
 
-<!-- NOVO GRÁFICO: Status por Especialidade -->
+<!-- Status por Especialidade -->
 <div class="dash-card p-6">
 <div class="flex items-center justify-between mb-4">
 <h3 class="text-xl font-bold gradient-text">
 <i class="fas fa-signal mr-2"></i>Status por Especialidade
 </h3>
-<span class="text-sm text-gray-500">Top 10 especialidades</span>
 </div>
 <div class="chart-container" style="height: 300px;">
 <canvas id="status-by-specialty-chart"></canvas>
 </div>
 <button class="expand-btn" aria-label="Ampliar gráfico"><i class="fas fa-expand"></i></button>
-<button class="info-btn" aria-label="Informações do gráfico"><i class="fas fa-info"></i></button>
+<button class="info-btn" aria-label="Informações de status por especialidade"><i class="fas fa-info"></i></button>
 <div class="info-tooltip">
-<h5>Status por Especialidade</h5>
-<strong>O que mostra:</strong> A composição de status (Crítico, Normal, etc.) para as 10 especialidades com mais atendimentos.
-<br/><br/>
-<strong>Extração:</strong> Contagem de `STATUS` agrupada pelo Top 10 de `ESPECIALIDADE`.
+<h5>Status por especialidade</h5> Top 10 especialidades com quebra por status para ver gargalos específicos.
 </div>
 </div>
 
@@ -675,53 +611,91 @@ Ajuste o período, status, especialidades ou busque termos livres. Todos os grá
 <h3 class="text-xl font-bold gradient-text">
 <i class="fas fa-bullseye mr-2"></i>Análise de Quadrante: Volume vs Efetividade
 </h3>
-<span class="text-sm text-gray-500">Por especialidade (mín. 5 casos)</span>
 </div>
 <div class="chart-container" style="height: 400px;">
 <canvas id="quadrant-chart"></canvas>
 </div>
 <button class="expand-btn" aria-label="Ampliar gráfico"><i class="fas fa-expand"></i></button>
 <button class="info-btn" aria-label="Informações do gráfico"><i class="fas fa-info"></i></button>
-<!-- [INÍCIO DA ALTERAÇÃO] Tooltip do quadrante com explicação detalhada -->
+<!-- Tooltip do quadrante -->
 <div class="info-tooltip" id="quadrant-chart-tooltip">
 <h5>Análise de Quadrante</h5>
-<p class="mb-2"><strong>O que mostra:</strong> Uma matriz 2x2 que posiciona cada especialidade (com mín. 5 casos) com base em seu <strong>Volume de Atendimentos (Eixo X)</strong> e sua <strong>Taxa de Efetividade (Eixo Y)</strong>.</p>
-<ul class="list-disc list-inside space-y-1 text-sm mb-2">
-<li><strong>Eixo X (Volume):</strong> Total de atendimentos. Mais à direita, maior o volume.</li>
-<li><strong>Eixo Y (Efetividade):</strong> % de desfechos positivos (Aceito, Concluído, Alta, etc). Mais acima, maior a efetividade.</li>
-<li><strong>Tamanho da Bolha:</strong> Representa o volume total.</li>
-</ul>
-<strong>Interpretando os Quadrantes:</strong>
-<ul class="list-none space-y-1 mt-1 text-sm">
-<li><strong style="color: #22c55e;">Superior Direito (Verde):</strong> <br/><em>Alto Volume, Alta Efetividade.</em><br/>São as especialidades "Carro-Chefe". Performam bem e lidam com alta demanda. Manter a excelência.</li>
-<li><strong style="color: #14b8a6;">Superior Esquerdo (Verde-azulado):</strong> <br/><em>Baixo Volume, Alta Efetividade.</em><br/>Especialidades de "Nicho". São eficientes, mas pouco acionadas. Ótima performance.</li>
-<li><strong style="color: #f59e0b;">Inferior Direito (Laranja):</strong> <br/><em>Alto Volume, Baixa Efetividade.</em><br/><strong>Ponto de Atenção Crítico.</strong> Muita demanda, mas baixa taxa de sucesso. Investigar gargalos, processos ou recursos.</li>
-<li><strong style="color: #ef4444;">Inferior Esquerdo (Vermelho):</strong> <br/><em>Baixo Volume, Baixa Efetividade.</em><br/>"Problemáticos". Baixa demanda e baixa performance. Analisar se os processos estão corretos ou se há problemas específicos.</li>
-</ul>
+<p class="mb-2"><strong>Eixo X (Volume):</strong> Total de atendimentos.</p>
+<p class="mb-2"><strong>Eixo Y (Efetividade):</strong> % de desfechos positivos.</p>
 </div>
-<!-- [FIM DA ALTERAÇÃO] -->
-
-<!-- [INÍCIO DA ALTERAÇÃO] Legenda do quadrante com novas cores e nomes -->
-<div class="mt-4 text-xs text-gray-500">
-<p><strong>Eixo X:</strong> Volume de atendimentos | <strong>Eixo Y:</strong> Taxa de sucesso (%)</p>
-<ul class="flex flex-wrap gap-x-4 gap-y-1 mt-2">
-<li class="flex items-center"><span class="w-3 h-3 rounded-full mr-1.5" style="background: #22c55e"></span>Alta Efet./Alto Vol. (Carro-chefe)</li>
-<li class="flex items-center"><span class="w-3 h-3 rounded-full mr-1.5" style="background: #f59e0b"></span>Baixa Efet./Alto Vol. (Atenção)</li>
-<li class="flex items-center"><span class="w-3 h-3 rounded-full mr-1.5" style="background: #14b8a6"></span>Alta Efet./Baixo Vol. (Nicho)</li>
-<li class="flex items-center"><span class="w-3 h-3 rounded-full mr-1.5" style="background: #ef4444"></span>Baixa Efet./Baixo Vol. (Problema)</li>
-</ul>
-</div>
-<!-- [FIM DA ALTERAÇÃO] -->
 </div>
 
 </div>
+
+<!-- [NOVO POSICIONAMENTO] SEÇÃO DE ANÁLISE AVANÇADA (Plotly) -->
+<div class="mb-10">
+    <h2 class="text-2xl font-bold gradient-text mb-4 pl-2 border-l-4 border-teal-500">Fluxos e Análise Avançada</h2>
+    <p class="text-sm text-gray-500 mb-6 pl-2">Visualizações interativas adicionadas (Sankey, Heatmap, Treemap).</p>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Sankey Chart -->
+        <div class="dash-card p-6 lg:col-span-2">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-700"><i class="fas fa-project-diagram mr-2 text-teal-600"></i>Fluxo de Atendimento (Sankey)</h3>
+                    <p class="text-sm text-gray-500">Caminho completo: Especialidade → Desfecho → Status. Arraste os nós para reorganizar.</p>
+                </div>
+                <span class="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded">Interativo</span>
+            </div>
+            <div id="sankey-chart" class="w-full min-h-[500px] h-[540px]"></div>
+            <button class="expand-btn" aria-label="Ampliar gráfico Sankey"><i class="fas fa-expand"></i></button>
+            <button class="info-btn" aria-label="Informações do Sankey"><i class="fas fa-info"></i></button>
+            <div class="info-tooltip">
+                <h5>Fluxo Sankey</h5>
+                <p class="mb-2">Mostra o caminho dos casos das especialidades até o desfecho e depois o status. A largura da faixa representa o volume.</p>
+                <p class="mb-0"><strong>Leia assim:</strong> comece na especialidade, siga até o desfecho e termine no status para ver perdas ou conversões.</p>
+            </div>
+        </div>
+
+        <!-- Heatmap -->
+        <div class="dash-card p-6 lg:col-span-2">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-700"><i class="fas fa-th mr-2 text-sky-600"></i>Mapa de Calor: Ocupação</h3>
+                    <p class="text-sm text-gray-500">Volume por dia da semana × hora do dia. Quanto mais escuro, maior o volume.</p>
+                </div>
+            </div>
+            <div id="heatmap-chart" class="w-full min-h-[460px] h-[520px]"></div>
+            <button class="expand-btn" aria-label="Ampliar mapa de calor"><i class="fas fa-expand"></i></button>
+            <button class="info-btn" aria-label="Informações do mapa de calor"><i class="fas fa-info"></i></button>
+            <div class="info-tooltip">
+                <h5>Mapa de Calor</h5>
+                <p class="mb-2">Identifica janelas de maior demanda ao cruzar dia da semana e horário.</p>
+                <p class="mb-0"><strong>Dica:</strong> use para ajustar escalas e priorizar horários críticos.</p>
+            </div>
+        </div>
+
+        <!-- Treemap -->
+        <div class="dash-card p-6 lg:col-span-2">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-700"><i class="fas fa-chart-area mr-2 text-indigo-600"></i>Volumetria (Treemap)</h3>
+                    <p class="text-sm text-gray-500">Cada bloco representa uma especialidade; o tamanho é proporcional ao volume.</p>
+                </div>
+            </div>
+            <div id="treemap-chart" class="w-full min-h-[460px] h-[520px]"></div>
+            <button class="expand-btn" aria-label="Ampliar treemap"><i class="fas fa-expand"></i></button>
+            <button class="info-btn" aria-label="Informações do treemap"><i class="fas fa-info"></i></button>
+            <div class="info-tooltip">
+                <h5>Treemap</h5>
+                <p class="mb-2">Permite comparar rapidamente o peso de cada especialidade.</p>
+                <p class="mb-0"><strong>Leia assim:</strong> blocos maiores indicam mais atendimentos; cores distinguem as especialidades.</p>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- [FIM DA SEÇÃO NOVA] -->
 
 <!-- INSIGHTS E TABELA -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
 <div class="dash-card p-6 lg:col-span-1">
 <div class="flex items-center justify-between mb-4">
 <h3 class="text-xl font-bold gradient-text"><i class="fas fa-lightbulb mr-2"></i>Insights automáticos</h3>
-<span class="text-sm text-gray-500">Resumo</span>
 </div>
 <div id="insight-container" class="space-y-4">
 <p class="text-sm text-gray-500">Carregue os dados para visualizar os principais destaques.</p>
@@ -731,7 +705,6 @@ Ajuste o período, status, especialidades ou busque termos livres. Todos os grá
 <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-4">
 <div>
 <h3 class="text-xl font-bold gradient-text"><i class="fas fa-table mr-2"></i>Registros filtrados</h3>
-<p class="text-sm text-gray-500">Tabela completa com informações essenciais.</p>
 </div>
 <span id="table-count" class="text-sm font-semibold text-teal-700 bg-teal-50 px-3 py-1 rounded-full">0 registros</span>
 </div>
@@ -762,9 +735,6 @@ class="mb-3 px-4 py-2 w-full border-2 border-gray-300 rounded-lg focus:border-te
 <tbody id="detail-table-body"></tbody>
 </table>
 </div>
-<p class="text-xs text-gray-500 mt-3">
-Dica: filtre por período e exporte o CSV para consolidar indicadores em relatórios ou BI.
-</p>
 </div>
 </div>
 </div>
@@ -784,52 +754,55 @@ Dica: filtre por período e exporte o CSV para consolidar indicadores em relató
 </div>
 <div class="chart-container" style="height: calc(80vh - 100px);">
 <canvas id="modal-chart-canvas"></canvas>
+<div id="modal-plotly-container" class="hidden w-full h-full"></div>
 </div>
 </div>
 </div>
-
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
 
 <script>
 const state = {
 raw: [],
 filtered: [],
 charts: {
-modalChart: null // Referência para o gráfico no modal
+ modalChart: null, // Referência para o gráfico no modal (Chart.js)
+ modalPlotly: null // Referência para o gráfico Plotly no modal
 },
 filters: { start: '', end: '', statuses: [], especialidades: [], search: '' },
 meta: { statuses: [], especialidades: [], bounds: { min: null, max: null }, fetchedAt: null },
 quick: null,
-filterTimeout: null // <-- ADICIONAR ESTA LINHA
+filterTimeout: null,
+plotlyCache: {}
 };
 
 // Paleta de cores "hospitalar"
 const chartPalette = [
-'#14b8a6', // Teal-500 [0] (Usado para Alta Efet./Baixo Vol.)
-'#0284c7', // Sky-600 [1]
-'#0e7490', // Cyan-700 [2]
-'#22c55e', // Green-500 [3] (Usado para Alta Efet./Alto Vol.)
-'#f59e0b', // Amber-500 [4] (Usado para Baixa Efet./Alto Vol.)
-'#ef4444', // Red-500 [5] (Usado para Baixa Efet./Baixo Vol.)
-'#6b7280', // Gray-500 [6]
-'#3b82f6' // Blue-500 [7]
+'#14b8a6', // Teal-500
+'#0284c7', // Sky-600
+'#0e7490', // Cyan-700
+'#22c55e', // Green-500
+'#f59e0b', // Amber-500
+'#ef4444', // Red-500
+'#6b7280', // Gray-500
+'#3b82f6' // Blue-500
 ];
 
-// Cores específicas para Status (para gráfico empilhado)
+const plotlyPalette = [
+ '#0ea5e9', '#10b981', '#8b5cf6', '#f97316', '#ef4444',
+ '#14b8a6', '#6366f1', '#22c55e', '#06b6d4', '#f59e0b',
+ '#a855f7', '#e11d48'
+];
+
 const statusColors = {
-'CRÍTICO': '#ef4444', // Red-500
-'ATENÇÃO': '#f59e0b', // Amber-500
-'PENDENTE': '#3b82f6', // Blue-500
-'NORMAL': '#0d9488', // Teal-700
-'CONCLUÍDO': '#059669', // Green-600
-'OUTRO': '#6b7280' // Gray-500
+'CRÍTICO': '#ef4444',
+'ATENÇÃO': '#f59e0b',
+'PENDENTE': '#3b82f6',
+'NORMAL': '#0d9488',
+'CONCLUÍDO': '#059669',
+'OUTRO': '#6b7280'
 };
 
 const UI = {};
 
-// --- UTILITIES ---
 function hexToRgba(hex, alpha) {
 const r = parseInt(hex.slice(1, 3), 16);
 const g = parseInt(hex.slice(3, 5), 16);
@@ -840,7 +813,6 @@ return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 document.addEventListener('DOMContentLoaded', () => {
 assignDomRefs();
 registerEvents();
-// Verifica se a URL padrão está preenchida e carrega
 if (UI.url?.value.trim()) loadDashboard();
 });
 
@@ -883,6 +855,7 @@ UI.fabScrollTop = document.getElementById('fab-scroll-top');
 UI.chartModal = document.getElementById('chart-modal');
 UI.modalChartTitle = document.getElementById('modal-chart-title');
 UI.modalChartCanvas = document.getElementById('modal-chart-canvas');
+UI.modalPlotly = document.getElementById('modal-plotly-container');
 }
 
 function registerEvents() {
@@ -976,17 +949,21 @@ closeChartModal();
 });
 }
 
-// --- Funções do Modal ---
 function openChartModal(chartInstance, title) {
 if (!chartInstance) return;
 
 if (state.charts.modalChart) {
 state.charts.modalChart.destroy();
 }
+if (state.charts.modalPlotly && UI.modalPlotly && typeof Plotly !== 'undefined') {
+Plotly.purge(UI.modalPlotly);
+state.charts.modalPlotly = null;
+}
 
 UI.modalChartTitle.textContent = title;
+if (UI.modalChartCanvas) UI.modalChartCanvas.classList.remove('hidden');
+if (UI.modalPlotly) UI.modalPlotly.classList.add('hidden');
 const config = chartInstance.config;
-// Desabilitar aspect ratio no modal para preencher o espaço
 const modalOptions = JSON.parse(JSON.stringify(config.options)); // Deep clone
 modalOptions.maintainAspectRatio = false;
 
@@ -997,7 +974,26 @@ options: modalOptions
 });
 
 UI.chartModal.classList.remove('hidden');
-setTimeout(() => UI.chartModal.classList.add('show'), 10); // Para transição
+setTimeout(() => UI.chartModal.classList.add('show'), 10);
+}
+
+function openPlotlyModal(cacheKey, title) {
+const spec = state.plotlyCache[cacheKey];
+if (!spec || !UI.modalPlotly || typeof Plotly === 'undefined') return;
+if (state.charts.modalChart) {
+state.charts.modalChart.destroy();
+state.charts.modalChart = null;
+}
+UI.modalChartTitle.textContent = title;
+if (UI.modalChartCanvas) UI.modalChartCanvas.classList.add('hidden');
+UI.modalPlotly.classList.remove('hidden');
+const containerHeight = UI.modalPlotly.parentElement ? UI.modalPlotly.parentElement.clientHeight : 600;
+const layout = { ...spec.layout, height: containerHeight };
+const config = { ...spec.config, displayModeBar: true };
+Plotly.purge(UI.modalPlotly);
+state.charts.modalPlotly = Plotly.react(UI.modalPlotly, spec.data, layout, config);
+UI.chartModal.classList.remove('hidden');
+setTimeout(() => UI.chartModal.classList.add('show'), 10);
 }
 
 function closeChartModal() {
@@ -1008,10 +1004,15 @@ if (state.charts.modalChart) {
 state.charts.modalChart.destroy();
 state.charts.modalChart = null;
 }
-}, 300); // Aguarda a transição
+if (state.charts.modalPlotly && UI.modalPlotly && typeof Plotly !== 'undefined') {
+Plotly.purge(UI.modalPlotly);
+state.charts.modalPlotly = null;
+}
+if (UI.modalChartCanvas) UI.modalChartCanvas.classList.remove('hidden');
+if (UI.modalPlotly) UI.modalPlotly.classList.add('hidden');
+}, 300);
 }
 
-// --- Carregamento e Processamento de Dados ---
 function loadDashboard() {
 const url = UI.url?.value.trim();
 if (!url) {
@@ -1020,7 +1021,7 @@ return;
 }
 
 clearDebug();
-log('Iniciando requisição para o endpoint informado.');
+log('Iniciando requisição...');
 
 UI.loading?.classList.remove('hidden');
 UI.urlSection?.classList.add('hidden');
@@ -1055,7 +1056,6 @@ function processData(data) {
 const rows = data
 .map((row, index) => {
 const desfecho = (row.DESFECHO || 'N/A').toString().trim().toUpperCase();
-// PULAR LINHAS COM DESFECHO "DUPLICADO"
 if (desfecho.includes('DUPLICADO')) return null;
 
 const dataFechamento = parseDate(row.DATA_FECHAMENTO);
@@ -1081,7 +1081,7 @@ MEDICO: (row.MEDICO || 'N/A').toString().trim(),
 ESPECIALIDADE: (row.ESPECIALIDADE || 'N/A').toString().trim(),
 DATA_FINALIZACAO: dataFinalizacao,
 DATA_FINALIZACAO_RAW: row.DATA_FINALIZACAO || '',
-DESFECHO: desfecho, // Já está em maiúsculo
+DESFECHO: desfecho,
 MES_ANO: (row.MES_ANO || '').toString().trim(),
 TRIMESTRE: (row.TRIMESTRE || 'N/A').toString().trim(),
 DIAS_PENDENTE: Number(row.DIAS_PENDENTE) || 0,
@@ -1090,7 +1090,7 @@ OBSERVACOES: (row.OBSERVACOES || '').toString().trim(),
 TEMPO_CONCLUSAO: tempoConclusao
 };
 })
-.filter(Boolean); // Remove os nulos (duplicados)
+.filter(Boolean);
 
 const statuses = Array.from(new Set(rows.map((row) => row.STATUS).filter(Boolean))).sort();
 const especialidades = Array.from(new Set(rows.map((row) => row.ESPECIALIDADE).filter(Boolean))).sort((a, b) =>
@@ -1112,7 +1112,6 @@ max: dates.length ? new Date(Math.max(...dates)) : null
 };
 }
 
-// --- Setup e Filtros ---
 function setupDashboard(info) {
 state.raw = info.rows;
 state.filtered = info.rows.slice();
@@ -1156,44 +1155,30 @@ updateFilterChips();
 
 function applyQuickFilter(id) {
 if (!state.raw.length) return;
-// REMOVIDO: Não usar mais bounds.max para data fim, pois pega datas futuras da planilha
-// const bounds = state.meta.bounds;
-// if (!bounds.max) return;
-
 state.quick = id;
-
-// ALTERADO: Agora a base é SEMPRE a data de HOJE
 let end = new Date();
 let start = null;
 
-if (id === 'quick-last-7') {
-start = shiftDays(end, 7); // Ajustado para 7 dias exatos
-} else if (id === 'quick-last-30') {
-start = shiftDays(end, 30);
-} else if (id === 'quick-last-90') {
-start = shiftDays(end, 90);
-} else if (id === 'quick-current-trimester') {
+if (id === 'quick-last-7') start = shiftDays(end, 7);
+else if (id === 'quick-last-30') start = shiftDays(end, 30);
+else if (id === 'quick-last-90') start = shiftDays(end, 90);
+else if (id === 'quick-current-trimester') {
 const latestTrimester = state.raw
 .map(r => r.TRIMESTRE)
 .filter(t => t && t !== 'N/A')
 .sort()
 .pop();
-
 if (latestTrimester) {
 const sameTrimester = state.raw.filter(
 (row) => row.TRIMESTRE === latestTrimester && row.DATA_FECHAMENTO instanceof Date
 );
 if (sameTrimester.length) {
 start = new Date(Math.min(...sameTrimester.map((row) => row.DATA_FECHAMENTO)));
-// Para o trimestre, mantemos o end como o máximo do trimestre OU hoje, o que for menor para não ir pro futuro
 const maxTrimesterDate = new Date(Math.max(...sameTrimester.map((row) => row.DATA_FECHAMENTO)));
 end = maxTrimesterDate > end ? end : maxTrimesterDate;
 }
 }
-// Fallback se não encontrar o trimestre
-if (!start) {
-start = shiftDays(end, 89);
-}
+if (!start) start = shiftDays(end, 89);
 }
 
 if (start && end) {
@@ -1202,10 +1187,8 @@ if (UI.filterEnd) UI.filterEnd.value = toInputDate(end);
 state.filters.start = toInputDate(start);
 state.filters.end = toInputDate(end);
 }
-
 updateQuickButtons();
 applyFilters();
-log(`Filtro rápido aplicado: ${id}. Base: ${toInputDate(end)}`);
 }
 
 function updateQuickButtons() {
@@ -1228,12 +1211,10 @@ if (start) {
 const startDate = new Date(`${start}T00:00:00`);
 rows = rows.filter((row) => !row.DATA_FECHAMENTO || row.DATA_FECHAMENTO >= startDate);
 }
-
 if (end) {
 const endDate = new Date(`${end}T23:59:59`);
 rows = rows.filter((row) => !row.DATA_FECHAMENTO || row.DATA_FECHAMENTO <= endDate);
 }
-
 if (statuses.length) rows = rows.filter((row) => statuses.includes(row.STATUS));
 if (especialidades.length) rows = rows.filter((row) => especialidades.includes(row.ESPECIALIDADE));
 if (search) {
@@ -1246,9 +1227,7 @@ row.ESPECIALIDADE,
 row.DESFECHO,
 row.STATUS,
 row.OBSERVACOES
-]
-.join(' ')
-.toLowerCase();
+].join(' ').toLowerCase();
 return text.includes(search);
 });
 }
@@ -1260,11 +1239,11 @@ updateDashboard();
 if (!silent) log(`Filtros aplicados: ${rows.length} de ${state.raw.length} registros.`);
 }
 
-// --- Atualização do Dashboard ---
 function updateDashboard() {
 const metrics = computeMetrics(state.filtered);
 renderKPIs(metrics);
 renderCharts(metrics);
+renderPlotlyCharts(state.filtered); // Novo: Gráficos avançados
 renderInsights(metrics);
 renderTable(state.filtered);
 updateLastUpdate();
@@ -1316,8 +1295,8 @@ quarterData: aggregateQuarterly(rows),
 hourlyData: aggregateHourly(rows),
 resolutionTimeData: aggregateResolutionTime(rows),
 funnelData: aggregateFunnel(rows),
-pendingDaysData: aggregatePendingDays(rows), // NOVO
-statusBySpecialtyData: aggregateStatusBySpecialty(rows) // NOVO
+pendingDaysData: aggregatePendingDays(rows),
+statusBySpecialtyData: aggregateStatusBySpecialty(rows)
 };
 }
 
@@ -1332,9 +1311,111 @@ setText('kpi-taxa', `${formatDecimal(metrics.kpis.taxaConclusao)}%`);
 setText('kpi-median', formatDecimal(metrics.kpis.median));
 setText('kpi-max', `${formatNumber(metrics.kpis.maxDias)} dias`);
 setText('kpi-conclusao', formatDuration(metrics.kpis.tempoMedioConclusao));
-setText('kpi-base-total', formatNumber(state.raw.length)); // NOVO
+setText('kpi-base-total', formatNumber(state.raw.length));
 }
 
+// --- PLOTLY CHARTS (NOVOS) ---
+function renderPlotlyCharts(data) {
+state.plotlyCache = {};
+if (!data.length) return;
+
+// 1. Sankey
+const espCounts = {};
+data.forEach(d => espCounts[d.ESPECIALIDADE] = (espCounts[d.ESPECIALIDADE] || 0) + 1);
+const topEsp = Object.entries(espCounts).sort((a,b) => b[1] - a[1]).slice(0, 10).map(x => x[0]);
+
+const nodes = [], nodeMap = new Map();
+const getIdx = (n) => {
+    if (!nodeMap.has(n)) { nodeMap.set(n, nodes.length); nodes.push(n); }
+    return nodeMap.get(n);
+};
+const linkMap = new Map();
+data.forEach(d => {
+    const esp = topEsp.includes(d.ESPECIALIDADE) ? d.ESPECIALIDADE : 'OUTRAS';
+    const desfecho = d.DESFECHO || 'N/A';
+    const status = d.STATUS || 'N/A';
+    [`${esp}|${desfecho}`, `${desfecho}|${status}`].forEach(k => linkMap.set(k, (linkMap.get(k) || 0) + 1));
+});
+const sources = [], targets = [], values = [], linkColors = [];
+linkMap.forEach((v, k) => {
+    const [s,t] = k.split('|');
+    const sourceIdx = getIdx(s);
+    const targetIdx = getIdx(t);
+    sources.push(sourceIdx);
+    targets.push(targetIdx);
+    values.push(v);
+    linkColors.push(hexToRgba(plotlyPalette[sourceIdx % plotlyPalette.length], 0.45));
+});
+const sankeyContainer = document.getElementById('sankey-chart');
+const sankeyHeight = sankeyContainer ? sankeyContainer.clientHeight || 540 : 540;
+const sankeyWidth = sankeyContainer ? sankeyContainer.clientWidth || 1100 : 1100;
+const sankeySpec = {
+    data: [{
+        type: "sankey", orientation: "h",
+        node: {
+            pad: 15, thickness: 20, line: { color: "#e2e8f0", width: 1 }, label: nodes,
+            color: nodes.map((_, i) => plotlyPalette[i % plotlyPalette.length])
+        },
+        link: { source: sources, target: targets, value: values, color: linkColors }
+    }],
+    layout: { margin: { l: 10, r: 10, t: 10, b: 10 }, height: sankeyHeight, width: sankeyWidth, autosize: true, font: {family:'Inter'}, paper_bgcolor:'#fff', plot_bgcolor:'#fff' },
+    config: {displayModeBar: false, responsive: true, useResizeHandler: true}
+};
+state.plotlyCache.sankey = sankeySpec;
+Plotly.react('sankey-chart', sankeySpec.data, sankeySpec.layout, sankeySpec.config);
+
+// 2. Heatmap
+const z = Array(7).fill(0).map(() => Array(24).fill(0));
+data.forEach(d => {
+    if (d.DATA_FECHAMENTO) {
+        const h = d.HORA || 0;
+        if (h >= 0 && h < 24) z[d.DATA_FECHAMENTO.getDay()][h]++;
+    }
+});
+const heatmapContainer = document.getElementById('heatmap-chart');
+const heatmapHeight = heatmapContainer ? heatmapContainer.clientHeight || 520 : 520;
+const heatmapWidth = heatmapContainer ? heatmapContainer.clientWidth || 1100 : 1100;
+const heatmapSpec = {
+    data: [{
+        z, x: Array.from({length:24},(_,i)=>i), y: ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'],
+        type: 'heatmap',
+        colorscale: [[0, '#fff7ed'], [0.35, '#fdba74'], [0.7, '#fb923c'], [1, '#b91c1c']],
+        hovertemplate: 'Dia %{y}<br>Hora %{x}:00<br>Qtd %{z}<extra></extra>'
+    }],
+    layout: { margin: {l:40, r:20, t:20, b:40}, height: heatmapHeight, width: heatmapWidth, autosize: true, xaxis: {title:'Hora'}, yaxis:{title:'Dia'}, font:{family:'Inter'} },
+    config: {displayModeBar: false, responsive: true, useResizeHandler: true}
+};
+state.plotlyCache.heatmap = heatmapSpec;
+Plotly.react('heatmap-chart', heatmapSpec.data, heatmapSpec.layout, heatmapSpec.config);
+
+// 3. Treemap
+const tCounts={}; data.forEach(d=>tCounts[d.ESPECIALIDADE]=(tCounts[d.ESPECIALIDADE]||0)+1);
+const totalTreemap = Object.values(tCounts).reduce((a,b)=>a+b,0);
+const tLabels = ["Total", ...Object.keys(tCounts)];
+const tParents = ["", ...Object.keys(tCounts).map(()=>"Total")];
+const tValues = [totalTreemap, ...Object.values(tCounts)];
+const treemapColors = tLabels.map((_,i)=> i===0 ? '#cbd5e1' : plotlyPalette[(i-1)%plotlyPalette.length]);
+const treemapContainer = document.getElementById('treemap-chart');
+const treemapHeight = treemapContainer ? treemapContainer.clientHeight || 520 : 520;
+const treemapWidth = treemapContainer ? treemapContainer.clientWidth || 1100 : 1100;
+const treemapSpec = {
+    data: [{
+        type: "treemap", labels: tLabels, parents: tParents, values: tValues, branchvalues: "total",
+        textinfo: "label+value", marker: {colors: treemapColors, line: {width: 1, color: '#fff'}},
+        hovertemplate: '%{label}<br>Qtd: %{value}<extra></extra>'
+    }],
+    layout: { margin: {l:0, r:0, t:10, b:0}, height: treemapHeight, width: treemapWidth, autosize: true, font:{family:'Inter'} },
+    config: {displayModeBar: false, responsive: true, useResizeHandler: true}
+};
+state.plotlyCache.treemap = treemapSpec;
+Plotly.react('treemap-chart', treemapSpec.data, treemapSpec.layout, treemapSpec.config);
+
+findAndAttachPlotlyExpand('sankey-chart', 'sankey', 'Fluxo de Atendimento (Sankey)');
+findAndAttachPlotlyExpand('heatmap-chart', 'heatmap', 'Mapa de Calor: Ocupação');
+findAndAttachPlotlyExpand('treemap-chart', 'treemap', 'Volumetria (Treemap)');
+}
+
+// --- CHART.JS ---
 function renderCharts(metrics) {
 destroyCharts();
 state.charts.status = createDoughnut('status-chart', metrics.statusData, chartPalette);
@@ -1350,15 +1431,12 @@ state.charts.quarter = createDoughnut('quarter-chart', metrics.quarterData, char
 state.charts.hourly = createLineChart('hourly-chart', metrics.hourlyData, chartPalette[1]);
 state.charts.resolutionTime = createBar('resolution-time-chart', metrics.resolutionTimeData, [chartPalette[3]], 'x');
 state.charts.funnel = createBar('funnel-chart', metrics.funnelData, chartPalette.slice(0, 4), 'y');
-
-// NOVOS GRÁFICOS
 state.charts.pendingDays = createBar('pending-days-chart', metrics.pendingDaysData, [chartPalette[4]], 'x');
 state.charts.statusBySpecialty = createStackedBar('status-by-specialty-chart', metrics.statusBySpecialtyData);
 
 const quadrantData = aggregateSpecialtyQuadrant(state.filtered);
 state.charts.quadrant = createQuadrantChart('quadrant-chart', quadrantData);
 
-// Anexar eventos de expandir
 findAndAttachExpand('status-chart', 'status', 'Status dos atendimentos');
 findAndAttachExpand('desfecho-chart', 'desfecho', 'Desfechos');
 findAndAttachExpand('especialidade-chart', 'especialidade', 'Top especialidades');
@@ -1390,6 +1468,19 @@ openChartModal(state.charts[chartKey], title);
 }
 }
 
+function findAndAttachPlotlyExpand(divId, cacheKey, title) {
+const el = document.getElementById(divId);
+if (!el) return;
+const card = el.closest('.dash-card');
+if (!card) return;
+const expandBtn = card.querySelector('.expand-btn');
+if (expandBtn) {
+expandBtn.onclick = (e) => {
+e.stopPropagation();
+openPlotlyModal(cacheKey, title);
+};
+}
+}
 
 function renderInsights(metrics) {
 if (!UI.insights) return;
@@ -1441,46 +1532,29 @@ text: `${maxRow.NOME_PACIENTE} acumula ${maxRow.DIAS_PENDENTE} dia(s) aguardando
 });
 }
 
-if (metrics.kpis.tempoMedioConclusao > 0) {
-insights.push({
-title: 'Tempo médio de conclusão',
-text: `Os casos finalizados levaram em média ${formatDuration(metrics.kpis.tempoMedioConclusao)}.`
-});
-}
-
-UI.insights.innerHTML = insights
-.slice(0, 4)
-.map(
-(item) => `
+UI.insights.innerHTML = insights.slice(0, 4).map(item => `
 <article class="insight-card">
 <h4 class="text-sm font-semibold text-teal-700">${escapeHtml(item.title)}</h4>
 <p class="text-sm text-gray-700 mt-1">${escapeHtml(item.text)}</p>
 </article>
-`
-)
-.join('');
+`).join('');
 }
 
 function renderTable(rows) {
 if (!UI.tableBody) return;
-
 if (!rows.length) {
-UI.tableBody.innerHTML =
-'<tr><td colspan="10" class="px-4 py-6 text-center text-sm text-gray-500">Nenhum registro encontrado.</td></tr>';
+UI.tableBody.innerHTML = '<tr><td colspan="10" class="px-4 py-6 text-center text-sm text-gray-500">Nenhum registro encontrado.</td></tr>';
 setText('table-count', '0 registros');
 return;
 }
 
-const sorted = rows
-.slice()
-.sort((a, b) => {
+const sorted = rows.slice().sort((a, b) => {
 const timeA = a.DATA_FECHAMENTO ? a.DATA_FECHAMENTO.getTime() : 0;
 const timeB = b.DATA_FECHAMENTO ? b.DATA_FECHAMENTO.getTime() : 0;
 return timeB - timeA;
 });
 
-UI.tableBody.innerHTML = sorted
-.map((row) => {
+UI.tableBody.innerHTML = sorted.slice(0, 100).map((row) => {
 const dataFechamento = row.DATA_FECHAMENTO
 ? `${formatDate(row.DATA_FECHAMENTO)}${row.HORA_FECHAMENTO_RAW ? ` ${row.HORA_FECHAMENTO_RAW}` : ''}`
 : row.DATA_FECHAMENTO_RAW || '-';
@@ -1503,8 +1577,7 @@ ${escapeHtml(truncate(row.OBSERVACOES || '', 90)) || '-'}
 </td>
 </tr>
 `;
-})
-.join('');
+}).join('');
 
 setText('table-count', `${formatNumber(sorted.length)} registro(s)`);
 }
@@ -1514,96 +1587,50 @@ if (!state.filtered.length) {
 alert('Não há registros para exportar.');
 return;
 }
-
 const headers = [
-'ATENDIMENTO',
-'RG',
-'NOME_PACIENTE',
-'DATA_FECHAMENTO',
-'HORA_FECHAMENTO',
-'MEDICO',
-'ESPECIALIDADE',
-'DATA_FINALIZACAO',
-'DESFECHO',
-'MES_ANO',
-'TRIMESTRE',
-'DIAS_PENDENTE',
-'STATUS',
-'OBSERVACOES',
-'TEMPO_CONCLUSAO_DIAS'
+'ATENDIMENTO', 'RG', 'NOME_PACIENTE', 'DATA_FECHAMENTO', 'HORA_FECHAMENTO',
+'MEDICO', 'ESPECIALIDADE', 'DATA_FINALIZACAO', 'DESFECHO', 'MES_ANO',
+'TRIMESTRE', 'DIAS_PENDENTE', 'STATUS', 'OBSERVACOES', 'TEMPO_CONCLUSAO_DIAS'
 ];
-
 const rows = state.filtered.map((row) => [
-row.ATENDIMENTO,
-row.RG,
-row.NOME_PACIENTE,
+row.ATENDIMENTO, row.RG, row.NOME_PACIENTE,
 row.DATA_FECHAMENTO ? formatDate(row.DATA_FECHAMENTO) : row.DATA_FECHAMENTO_RAW,
-row.HORA_FECHAMENTO_RAW,
-row.MEDICO,
-row.ESPECIALIDADE,
+row.HORA_FECHAMENTO_RAW, row.MEDICO, row.ESPECIALIDADE,
 row.DATA_FINALIZACAO ? formatDateTime(row.DATA_FINALIZACAO) : row.DATA_FINALIZACAO_RAW,
-row.DESFECHO,
-row.MES_ANO,
-row.TRIMESTRE,
-row.DIAS_PENDENTE,
-row.STATUS,
-row.OBSERVACOES,
-row.TEMPO_CONCLUSAO !== null ? formatDecimal(row.TEMPO_CONCLUSAO) : ''
+row.DESFECHO, row.MES_ANO, row.TRIMESTRE, row.DIAS_PENDENTE, row.STATUS,
+row.OBSERVACOES, row.TEMPO_CONCLUSAO !== null ? formatDecimal(row.TEMPO_CONCLUSAO) : ''
 ]);
-
-const csv = [headers, ...rows]
-.map((line) =>
-line
-.map((value) => `"${String(value ?? '').replace(/"/g, '""')}"`)
-.join(';')
-)
-.join('\n');
-
+const csv = [headers, ...rows].map(line => line.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(';')).join('\n');
 const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
 const url = URL.createObjectURL(blob);
 const link = document.createElement('a');
 link.href = url;
-link.download = `dashboard-atendimentos-${toInputDate(new Date())}.csv`;
+link.download = `dashboard-${toInputDate(new Date())}.csv`;
 document.body.appendChild(link);
 link.click();
 document.body.removeChild(link);
 URL.revokeObjectURL(url);
-log('Exportação CSV concluída.');
 }
 
-// --- Funções de Criação de Gráficos ---
+// --- Funções de Criação de Gráficos (RESTORED FULL) ---
 
 function calculateLinearRegression(data) {
 if (!data || data.length < 2) return null;
-let n = 0;
-let sumX = 0;
-let sumY = 0;
-let sumXY = 0;
-let sumXX = 0;
-const transformedData = data.map(point => ({
-x: point.x.getTime(),
-y: point.y
-}));
+let n = 0, sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+const transformedData = data.map(point => ({ x: point.x.getTime(), y: point.y }));
 transformedData.forEach(point => {
-sumX += point.x;
-sumY += point.y;
-sumXY += point.x * point.y;
-sumXX += point.x * point.x;
-n++;
+sumX += point.x; sumY += point.y; sumXY += point.x * point.y; sumXX += point.x * point.x; n++;
 });
 const denominator = (n * sumXX - sumX * sumX);
 if (denominator === 0) return null;
 const b = (n * sumXY - sumX * sumY) / denominator;
 const a = (sumY - b * sumX) / n;
 if (!isFinite(a) || !isFinite(b)) return null;
-const firstX = transformedData[0].x;
-const lastX = transformedData[transformedData.length - 1].x;
 return [
-{ x: new Date(firstX), y: a + b * firstX },
-{ x: new Date(lastX), y: a + b * lastX }
+{ x: new Date(transformedData[0].x), y: a + b * transformedData[0].x },
+{ x: new Date(transformedData[n - 1].x), y: a + b * transformedData[n - 1].x }
 ];
 }
-
 
 function createDoughnut(id, data, colors) {
 const canvas = document.getElementById(id);
@@ -1612,43 +1639,15 @@ return new Chart(canvas, {
 type: 'doughnut',
 data: {
 labels: data.labels,
-datasets: [
-{
+datasets: [{
 data: data.values,
 backgroundColor: colors,
-borderWidth: 2,
-borderColor: '#fff',
-hoverOffset: 4
-}
-]
+borderWidth: 2, borderColor: '#fff', hoverOffset: 4
+}]
 },
 options: {
-responsive: true,
-maintainAspectRatio: false,
-cutout: '62%',
-plugins: {
-legend: {
-position: 'bottom',
-labels: {
-boxWidth: 16,
-padding: 16,
-font: {
-family: 'Inter'
-}
-}
-},
-tooltip: {
-callbacks: {
-label: function(context) {
-const label = context.label || '';
-const value = context.raw || 0;
-const total = context.dataset.data.reduce((a, b) => a + b, 0);
-const percentage = ((value / (total || 1)) * 100).toFixed(1);
-return `${label}: ${value} (${percentage}%)`;
-}
-}
-}
-}
+responsive: true, maintainAspectRatio: false, cutout: '62%',
+plugins: { legend: { position: 'bottom', labels: { boxWidth: 16, padding: 16, font: { family: 'Inter' } } } }
 }
 });
 }
@@ -1660,116 +1659,34 @@ return new Chart(canvas, {
 type: 'bar',
 data: {
 labels: data.labels,
-datasets: [
-{
+datasets: [{
 data: data.values,
 backgroundColor: colors.length === 1 ? colors[0] : colors.slice(0, data.labels.length),
-borderRadius: 8,
-maxBarThickness: 48,
-hoverBackgroundColor: colors.length === 1 ? colors[0] : colors.slice(0, data.labels.length)
-}
-]
+borderRadius: 8, maxBarThickness: 48
+}]
 },
 options: {
-indexAxis,
-responsive: true,
-maintainAspectRatio: false,
-plugins: {
-legend: { display: false },
-tooltip: {
-backgroundColor: 'rgba(0, 0, 0, 0.8)',
-titleFont: {
-family: 'Inter'
-},
-bodyFont: {
-family: 'Inter'
-}
-}
-},
+indexAxis, responsive: true, maintainAspectRatio: false,
+plugins: { legend: { display: false } },
 scales: {
-x: {
-ticks: {
-autoSkip: false,
-maxRotation: indexAxis === 'x' ? 45 : 0,
-color: '#475569',
-font: {
-family: 'Inter'
-}
-},
-grid: { display: false }
-},
-y: {
-beginAtZero: true,
-ticks: {
-color: '#475569',
-precision: 0,
-font: {
-family: 'Inter'
-}
-},
-grid: {
-color: '#e2e8f0',
-drawBorder: false
-}
-}
-},
-animation: {
-duration: 1000,
-easing: 'easeInOutQuart'
+x: { ticks: { autoSkip: false, maxRotation: indexAxis === 'x' ? 45 : 0, font: { family: 'Inter' } }, grid: { display: false } },
+y: { beginAtZero: true, ticks: { font: { family: 'Inter' } }, grid: { color: '#e2e8f0', drawBorder: false } }
 }
 }
 });
 }
 
-// NOVO: Gráfico de Barras Empilhadas
 function createStackedBar(id, data) {
 const canvas = document.getElementById(id);
 if (!canvas) return null;
-
-// data = { labels: ['Espec 1', ...], datasets: [{ label: 'CRÍTICO', data: [1, 5, ...] }, ...] }
 return new Chart(canvas, {
-type: 'bar',
-data: data,
+type: 'bar', data: data,
 options: {
-indexAxis: 'y', // Empilhado na horizontal
-responsive: true,
-maintainAspectRatio: false,
-plugins: {
-legend: {
-position: 'bottom',
-labels: {
-font: { family: 'Inter' }
-}
-},
-tooltip: {
-backgroundColor: 'rgba(0, 0, 0, 0.8)',
-}
-},
+indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+plugins: { legend: { position: 'bottom', labels: { font: { family: 'Inter' } } } },
 scales: {
-x: {
-stacked: true,
-ticks: {
-color: '#475569',
-font: { family: 'Inter' },
-precision: 0
-},
-grid: {
-color: '#e2e8f0',
-drawBorder: false
-}
-},
-y: {
-stacked: true,
-ticks: {
-color: '#475569',
-font: { family: 'Inter' }
-},
-grid: { display: false }
-}
-},
-animation: {
-duration: 1000,
-easing: 'easeInOutQuart'
+x: { stacked: true, ticks: { font: { family: 'Inter' } }, grid: { color: '#e2e8f0', drawBorder: false } },
+y: { stacked: true, ticks: { font: { family: 'Inter' } }, grid: { display: false } }
 }
 }
 });
@@ -1780,99 +1697,24 @@ const canvas = document.getElementById(id);
 if (!canvas) return null;
 const total = data.values.reduce((sum, value) => sum + value, 0) || 1;
 let acc = 0;
-const percentages = data.values.map((value) => {
-acc += value;
-return (acc / total) * 100;
-});
-
+const percentages = data.values.map((value) => { acc += value; return (acc / total) * 100; });
 return new Chart(canvas, {
 type: 'bar',
 data: {
 labels: data.labels,
 datasets: [
-{
-label: 'Qtd',
-data: data.values,
-backgroundColor: chartPalette[0],
-borderRadius: 8,
-yAxisID: 'y',
-order: 2
-},
-{
-label: 'Acumulado %',
-data: percentages,
-type: 'line',
-borderColor: chartPalette[1],
-backgroundColor: hexToRgba(chartPalette[1], 0.1),
-yAxisID: 'y1',
-tension: 0.3,
-fill: true,
-order: 1
-}
+{ label: 'Qtd', data: data.values, backgroundColor: chartPalette[0], borderRadius: 8, yAxisID: 'y', order: 2 },
+{ label: 'Acumulado %', data: percentages, type: 'line', borderColor: chartPalette[1], backgroundColor: hexToRgba(chartPalette[1], 0.1), yAxisID: 'y1', tension: 0.3, fill: true, order: 1 }
 ]
 },
 options: {
-responsive: true,
-maintainAspectRatio: false,
-interaction: {
-mode: 'index',
-intersect: false,
-},
-plugins: {
-legend: {
-position: 'bottom',
-labels: {
-font: {
-family: 'Inter'
-}
-}
-},
-tooltip: {
-backgroundColor: 'rgba(0, 0, 0, 0.8)',
-}
-},
+responsive: true, maintainAspectRatio: false,
+interaction: { mode: 'index', intersect: false },
+plugins: { legend: { position: 'bottom', labels: { font: { family: 'Inter' } } } },
 scales: {
-y: {
-beginAtZero: true,
-ticks: {
-color: '#475569',
-precision: 0,
-font: {
-family: 'Inter'
-}
-},
-grid: {
-drawBorder: false
-}
-},
-y1: {
-beginAtZero: true,
-max: 100,
-position: 'right',
-ticks: {
-color: chartPalette[1],
-callback: (value) => `${value}%`,
-font: {
-family: 'Inter'
-}
-},
-grid: { drawOnChartArea: false }
-},
-x: {
-ticks: {
-color: '#475569',
-autoSkip: false,
-maxRotation: 45,
-font: {
-family: 'Inter'
-}
-},
-grid: { display: false }
-}
-},
-animation: {
-duration: 1000,
-easing: 'easeInOutQuart'
+y: { beginAtZero: true, grid: { drawBorder: false } },
+y1: { beginAtZero: true, max: 100, position: 'right', grid: { drawOnChartArea: false } },
+x: { ticks: { autoSkip: false, maxRotation: 45 }, grid: { display: false } }
 }
 }
 });
@@ -1881,101 +1723,22 @@ easing: 'easeInOutQuart'
 function createTimeline(id, data, trendData = null) {
 const canvas = document.getElementById(id);
 if (!canvas) return null;
-
-const datasets = [
-{
-label: 'Atendimentos',
-data,
-borderColor: chartPalette[0],
-backgroundColor: hexToRgba(chartPalette[0], 0.1),
-fill: true,
-tension: 0.4,
-pointRadius: 3,
-pointHoverRadius: 5,
-pointBackgroundColor: chartPalette[0],
-pointBorderColor: '#fff',
-pointBorderWidth: 2
-}
-];
-
+const datasets = [{
+label: 'Atendimentos', data, borderColor: chartPalette[0], backgroundColor: hexToRgba(chartPalette[0], 0.1),
+fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: chartPalette[0], pointBorderColor: '#fff', pointBorderWidth: 2
+}];
 if (trendData) {
 datasets.push({
-label: 'Tendência',
-data: trendData,
-type: 'line',
-borderColor: '#f97316',
-backgroundColor: 'transparent',
-borderWidth: 2,
-borderDash: [5, 5],
-pointRadius: 0,
-pointHoverRadius: 0,
-fill: false,
-tension: 0
+label: 'Tendência', data: trendData, type: 'line', borderColor: '#f97316', backgroundColor: 'transparent',
+borderWidth: 2, borderDash: [5, 5], pointRadius: 0, fill: false, tension: 0
 });
 }
-
 return new Chart(canvas, {
-type: 'line',
-data: {
-datasets: datasets
-},
-options: {
-responsive: true,
-maintainAspectRatio: false,
-plugins: {
-legend: { display: true, position: 'bottom' },
-tooltip: {
-backgroundColor: 'rgba(0, 0, 0, 0.8)',
-callbacks: {
-title: function(tooltipItems) {
-if (tooltipItems.length) {
-return formatDate(tooltipItems[0].raw.x);
-}
-return '';
-}
-}
-}
-},
+type: 'line', data: { datasets: datasets },
+options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'bottom' } } },
 scales: {
-x: {
-type: 'time',
-time: {
-unit: 'day',
-tooltipFormat: 'dd/MM/yyyy',
-displayFormats: {
-day: 'dd/MM'
-}
-},
-ticks: {
-color: '#475569',
-font: {
-family: 'Inter'
-}
-},
-grid: {
-color: '#e2e8f0',
-drawBorder: false
-}
-},
-y: {
-beginAtZero: true,
-ticks: {
-color: '#475569',
-precision: 0,
-font: {
-family: 'Inter'
-}
-},
-grid: {
-color: 'transparent',
-drawBorder: false
-}
-}
-},
-animation: {
-duration: 1000,
-easing: 'easeInOutQuart'
-}
+x: { type: 'time', time: { unit: 'day', tooltipFormat: 'dd/MM/yyyy', displayFormats: { day: 'dd/MM' } }, grid: { color: '#e2e8f0', drawBorder: false } },
+y: { beginAtZero: true, grid: { color: 'transparent', drawBorder: false } }
 }
 });
 }
@@ -1988,147 +1751,57 @@ type: 'line',
 data: {
 labels: data.labels,
 datasets: [{
-label: 'Atendimentos',
-data: data.values,
-borderColor: color,
-backgroundColor: hexToRgba(color, 0.1),
-fill: true,
-tension: 0.4,
-pointRadius: 2,
-pointHoverRadius: 4,
-pointBackgroundColor: color,
-pointBorderColor: '#fff',
-pointBorderWidth: 1
+label: 'Atendimentos', data: data.values, borderColor: color, backgroundColor: hexToRgba(color, 0.1),
+fill: true, tension: 0.4, pointRadius: 2, pointBackgroundColor: color, pointBorderColor: '#fff', pointBorderWidth: 1
 }]
 },
-options: {
-responsive: true,
-maintainAspectRatio: false,
-plugins: {
-legend: { display: false },
-tooltip: {
-backgroundColor: 'rgba(0, 0, 0, 0.8)',
-}
-},
-scales: {
-x: {
-ticks: {
-color: '#475569',
-font: { family: 'Inter' },
-autoSkip: true,
-maxTicks: 12
-}
-},
-y: {
-beginAtZero: true,
-ticks: {
-color: '#475569',
-precision: 0,
-font: { family: 'Inter' }
-},
-grid: {
-color: '#e2e8f0',
-drawBorder: false
-}
-}
-}
-}
+options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { autoSkip: true, maxTicks: 12 }, grid: { display: false } }, y: { beginAtZero: true, grid: { color: '#e2e8f0', drawBorder: false } } } }
 });
 }
 
-// [INÍCIO DA ALTERAÇÃO] Cores do quadrante atualizadas
 function createQuadrantChart(id, data) {
 const canvas = document.getElementById(id);
 if (!canvas) return null;
-
 const avgX = data.length ? data.reduce((sum, p) => sum + p.x, 0) / data.length : 0;
 const avgY = data.length ? data.reduce((sum, p) => sum + p.y, 0) / data.length : 0;
-
 return new Chart(canvas, {
 type: 'scatter',
 data: {
 datasets: [{
-label: 'Especialidades',
-data: data,
+label: 'Especialidades', data: data,
 backgroundColor: data.map(d => {
-// chartPalette[3] = Verde Vivo (#22c55e)
-// chartPalette[0] = Teal Vivo (#14b8a6)
-// chartPalette[4] = Laranja (#f59e0b)
-// chartPalette[5] = Vermelho (#ef4444)
-if (d.x >= avgX && d.y >= avgY) return hexToRgba(chartPalette[3], 0.7); // Superior Direito (Alta/Alta)
-if (d.x >= avgX && d.y < avgY) return hexToRgba(chartPalette[4], 0.7); // Inferior Direito (Baixa/Alta)
-if (d.x < avgX && d.y >= avgY) return hexToRgba(chartPalette[0], 0.7); // Superior Esquerdo (Alta/Baixa)
-return hexToRgba(chartPalette[5], 0.7); // Inferior Esquerdo (Baixa/Baixa)
+if (d.x >= avgX && d.y >= avgY) return hexToRgba(chartPalette[3], 0.7);
+if (d.x >= avgX && d.y < avgY) return hexToRgba(chartPalette[4], 0.7);
+if (d.x < avgX && d.y >= avgY) return hexToRgba(chartPalette[0], 0.7);
+return hexToRgba(chartPalette[5], 0.7);
 }),
-pointRadius: data.map(d => Math.max(5, Math.sqrt(d.size) * 1.5)),
-pointHoverRadius: data.map(d => Math.max(7, Math.sqrt(d.size) * 2))
+pointRadius: data.map(d => Math.max(5, Math.sqrt(d.size) * 1.5))
 }]
 },
 options: {
-responsive: true,
-maintainAspectRatio: false,
-plugins: {
-legend: { display: false },
-tooltip: {
-callbacks: {
-label: (context) => {
-const point = data[context.dataIndex];
-if (!point) return '';
-return [
-`${point.label}`,
-`Volume: ${point.x} atendimentos`,
-`Efetividade: ${point.y.toFixed(1)}%`
-];
-}
-}
-}
-},
-scales: {
-x: {
-title: {
-display: true,
-text: 'Volume de Atendimentos',
-font: { family: 'Inter', weight: 600 }
-},
-ticks: { precision: 0 }
-},
-y: {
-title: {
-display: true,
-text: 'Taxa de Sucesso (%)',
-font: { family: 'Inter', weight: 600 }
-},
-min: 0,
-max: 100
-}
-}
+responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+scales: { x: { title: { display: true, text: 'Volume' } }, y: { title: { display: true, text: 'Efetividade (%)' }, min: 0, max: 100 } }
 }
 });
 }
-// [FIM DA ALTERAÇÃO]
 
 function destroyCharts() {
-closeChartModal(); // Fecha e destrói o gráfico do modal
+closeChartModal();
 Object.keys(state.charts).forEach(key => {
-if (key !== 'modalChart' && state.charts[key]) {
+if (key !== 'modalChart' && key !== 'modalPlotly' && state.charts[key] && typeof state.charts[key].destroy === 'function') {
 state.charts[key].destroy();
 }
 state.charts[key] = null;
 });
-state.charts = { modalChart: null }; // Reseta o objeto
+state.charts.modalChart = null;
+state.charts.modalPlotly = null;
 }
 
-// --- Funções de Agregação de Dados ---
-
+// --- Funções de Agregação ---
 function aggregate(rows, key, limit = null) {
 const counts = {};
-rows.forEach((row) => {
-const value = row[key] || 'N/A';
-counts[value] = (counts[value] || 0) + 1;
-});
-let entries = Object.entries(counts)
-.filter(([label]) => label && label !== 'N/A')
-.sort((a, b) => b[1] - a[1]);
+rows.forEach((row) => { const value = row[key] || 'N/A'; counts[value] = (counts[value] || 0) + 1; });
+let entries = Object.entries(counts).filter(([label]) => label && label !== 'N/A').sort((a, b) => b[1] - a[1]);
 if (limit) entries = entries.slice(0, limit);
 return { labels: entries.map((entry) => entry[0]), values: entries.map((entry) => entry[1]) };
 }
@@ -2141,9 +1814,7 @@ const key = row.DATA_FECHAMENTO.toISOString().split('T')[0];
 counts[key] = (counts[key] || 0) + 1;
 }
 });
-return Object.entries(counts)
-.map(([date, value]) => ({ x: new Date(date), y: value }))
-.sort((a, b) => a.x - b.x);
+return Object.entries(counts).map(([date, value]) => ({ x: new Date(date), y: value })).sort((a, b) => a.x - b.x);
 }
 
 function aggregateMonthly(rows) {
@@ -2155,38 +1826,23 @@ label = label || 'Sem mês';
 counts[label] = (counts[label] || 0) + 1;
 });
 const result = { labels: [], values: [] };
-Object.entries(counts)
-.sort((a, b) => monthToDate(a[0]) - monthToDate(b[0]))
-.forEach(([label, value]) => {
-result.labels.push(label);
-result.values.push(value);
+Object.entries(counts).sort((a, b) => monthToDate(a[0]) - monthToDate(b[0])).forEach(([label, value]) => {
+result.labels.push(label); result.values.push(value);
 });
 return result;
 }
 
 function aggregateQuarterly(rows) {
 const counts = {};
-rows.forEach((row) => {
-const value = row['TRIMESTRE'] || 'N/A';
-counts[value] = (counts[value] || 0) + 1;
-});
-let entries = Object.entries(counts)
-.filter(([label]) => label && label !== 'N/A')
-.sort((a, b) => a[0].localeCompare(b[0], 'pt-BR'));
+rows.forEach((row) => { const value = row['TRIMESTRE'] || 'N/A'; counts[value] = (counts[value] || 0) + 1; });
+let entries = Object.entries(counts).filter(([label]) => label && label !== 'N/A').sort((a, b) => a[0].localeCompare(b[0], 'pt-BR'));
 return { labels: entries.map((entry) => entry[0]), values: entries.map((entry) => entry[1]) };
 }
 
 function aggregateHourly(rows) {
 const counts = Array(24).fill(0);
-rows.forEach((row) => {
-if (row.HORA !== null && row.HORA >= 0 && row.HORA <= 23) {
-counts[row.HORA]++;
-}
-});
-return {
-labels: Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`),
-values: counts
-};
+rows.forEach((row) => { if (row.HORA !== null && row.HORA >= 0 && row.HORA <= 23) counts[row.HORA]++; });
+return { labels: Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`), values: counts };
 }
 
 function aggregateResolutionTime(rows) {
@@ -2194,110 +1850,58 @@ const bins = { '0-1 dia': 0, '2-7 dias': 0, '8-14 dias': 0, '15-30 dias': 0, '31
 const concluidos = rows.filter(row => row.TEMPO_CONCLUSAO !== null && row.TEMPO_CONCLUSAO >= 0);
 concluidos.forEach(row => {
 const dias = row.TEMPO_CONCLUSAO;
-if (dias <= 1) bins['0-1 dia']++;
-else if (dias <= 7) bins['2-7 dias']++;
-else if (dias <= 14) bins['8-14 dias']++;
-else if (dias <= 30) bins['15-30 dias']++;
-else bins['31+ dias']++;
+if (dias <= 1) bins['0-1 dia']++; else if (dias <= 7) bins['2-7 dias']++; else if (dias <= 14) bins['8-14 dias']++;
+else if (dias <= 30) bins['15-30 dias']++; else bins['31+ dias']++;
 });
 return { labels: Object.keys(bins), values: Object.values(bins) };
 }
 
-// NOVO: Agregação de Dias Pendentes
 function aggregatePendingDays(rows) {
 const bins = { '0-7 dias': 0, '8-14 dias': 0, '15-30 dias': 0, '31-60 dias': 0, '61+ dias': 0 };
 rows.forEach(row => {
 const dias = row.DIAS_PENDENTE;
-if (dias <= 7) bins['0-7 dias']++;
-else if (dias <= 14) bins['8-14 dias']++;
-else if (dias <= 30) bins['15-30 dias']++;
-else if (dias <= 60) bins['31-60 dias']++;
-else bins['61+ dias']++;
+if (dias <= 7) bins['0-7 dias']++; else if (dias <= 14) bins['8-14 dias']++; else if (dias <= 30) bins['15-30 dias']++;
+else if (dias <= 60) bins['31-60 dias']++; else bins['61+ dias']++;
 });
 return { labels: Object.keys(bins), values: Object.values(bins) };
 }
 
-// NOVO: Agregação de Status por Especialidade
 function aggregateStatusBySpecialty(rows) {
-// 1. Encontrar as Top 10 especialidades
 const topEspecialidades = aggregate(rows, 'ESPECIALIDADE', 10).labels;
 if (!topEspecialidades.length) return { labels: [], datasets: [] };
-
-// 2. Encontrar todos os status únicos (para as legendas)
-const allStatus = [...state.meta.statuses].sort((a, b) => {
-// Prioriza status "perigosos"
-if (a === 'CRÍTICO') return -1;
-if (b === 'CRÍTICO') return 1;
-if (a === 'ATENÇÃO') return -1;
-if (b === 'ATENÇÃO') return 1;
-return a.localeCompare(b);
-});
-
-// 3. Contar status para cada top especialidade
-const counts = {}; // { 'Espec 1': { 'CRÍTICO': 10, 'NORMAL': 5 }, ... }
-rows.forEach(row => {
-const esp = row.ESPECIALIDADE;
-if (topEspecialidades.includes(esp)) {
-if (!counts[esp]) counts[esp] = {};
-const status = row.STATUS || 'N/A';
-counts[esp][status] = (counts[esp][status] || 0) + 1;
-}
-});
-
-// 4. Formatar para Chart.js
-const datasets = allStatus.map(status => {
-return {
+const allStatus = [...state.meta.statuses].sort((a, b) => a.localeCompare(b));
+const datasets = allStatus.map(status => ({
 label: status,
-data: topEspecialidades.map(esp => counts[esp]?.[status] || 0),
+data: topEspecialidades.map(esp => rows.filter(r => r.ESPECIALIDADE === esp && r.STATUS === status).length),
 backgroundColor: statusColors[status] || statusColors['OUTRO']
-};
-});
-
-return {
-labels: topEspecialidades,
-datasets: datasets
-};
+}));
+return { labels: topEspecialidades, datasets: datasets };
 }
-
 
 function aggregateSpecialtyQuadrant(rows) {
 const specialtyData = {};
 rows.forEach(row => {
 const esp = row.ESPECIALIDADE || 'N/A';
 if (esp === 'N/A') return;
-if (!specialtyData[esp]) {
-specialtyData[esp] = { total: 0, positivos: 0 };
-}
+if (!specialtyData[esp]) specialtyData[esp] = { total: 0, positivos: 0 };
 specialtyData[esp].total++;
 const desfecho = row.DESFECHO.toUpperCase();
-if (desfecho.includes('ACEITO') ||
-desfecho.includes('CONCLU') ||
-desfecho.includes('ALTA') ||
-desfecho.includes('CDR') ||
-desfecho.includes('AGENDADO')) {
-specialtyData[esp].positivos++;
-}
+if (desfecho.includes('ACEITO') || desfecho.includes('CONCLU') || desfecho.includes('ALTA') || desfecho.includes('CDR')) specialtyData[esp].positivos++;
 });
 return Object.entries(specialtyData)
-.map(([name, data]) => ({
-x: data.total,
-y: (data.total > 0) ? (data.positivos / data.total) * 100 : 0,
-label: name,
-size: data.total
-}))
+.map(([name, data]) => ({ x: data.total, y: (data.total > 0) ? (data.positivos / data.total) * 100 : 0, label: name, size: data.total }))
 .filter(d => d.x >= 5);
 }
 
 function aggregateFunnel(rows) {
-const stages = {
-'Total Filtrado': rows.length,
-'Status NORMAL': rows.filter(r => (r.STATUS || '').toUpperCase() === 'NORMAL').length,
-'Desfecho ACEITO': rows.filter(r => (r.DESFECHO || '').toUpperCase().includes('ACEITO')).length,
-'Desfecho CONCLUÍDO/ALTA': rows.filter(r => (r.DESFECHO || '').toUpperCase().includes('CONCLU') || (r.DESFECHO || '').toUpperCase().includes('ALTA')).length
-};
 return {
-labels: Object.keys(stages),
-values: Object.values(stages)
+labels: ['Total Filtrado', 'Status NORMAL', 'Desfecho ACEITO', 'Desfecho CONCLUÍDO/ALTA'],
+values: [
+    rows.length,
+    rows.filter(r => (r.STATUS || '').toUpperCase() === 'NORMAL').length,
+    rows.filter(r => (r.DESFECHO || '').toUpperCase().includes('ACEITO')).length,
+    rows.filter(r => (r.DESFECHO || '').toUpperCase().includes('CONCLU') || (r.DESFECHO || '').toUpperCase().includes('ALTA')).length
+]
 };
 }
 
@@ -2307,35 +1911,7 @@ if (!Number.isFinite(month) || !Number.isFinite(year)) return new Date(0);
 return new Date(year, month - 1, 1);
 }
 
-// --- Helpers de UI e Formatação ---
-
-function updateFilterChips() {
-if (!UI.filterChips) return;
-const chips = [];
-if (state.filters.start || state.filters.end) {
-const start = state.filters.start ? formatDate(new Date(`${state.filters.start}T00:00:00`)) : 'início';
-const end = state.filters.end ? formatDate(new Date(`${state.filters.end}T00:00:00`)) : 'fim';
-chips.push(`<span class="px-3 py-1 bg-teal-100 text-teal-700 rounded-full text-xs font-semibold">Período: ${escapeHtml(start)} → ${escapeHtml(end)}</span>`);
-}
-if (state.filters.statuses.length) {
-chips.push(`<span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">Status: ${escapeHtml(state.filters.statuses.join(', '))}</span>`);
-}
-if (state.filters.especialidades.length) {
-chips.push(`<span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">Especialidades: ${escapeHtml(state.filters.especialidades.slice(0, 3).join(', '))}${state.filters.especialidades.length > 3 ? '...' : ''}</span>`);
-}
-if (state.filters.search) {
-chips.push(`<span class="px-3 py-1 bg-sky-100 text-sky-700 rounded-full text-xs font-semibold">Busca: ${escapeHtml(state.filters.search)}</span>`);
-}
-UI.filterChips.innerHTML = chips.length
-? chips.join('')
-: '<span class="text-xs text-gray-500">Nenhum filtro adicional aplicado.</span>';
-}
-
-function updateLastUpdate() {
-if (!UI.lastUpdate || !state.meta.fetchedAt) return;
-const percent = formatPercent(state.filtered.length, state.raw.length || 1);
-UI.lastUpdate.textContent = `Atualizado em ${formatDateTime(state.meta.fetchedAt)} • ${formatNumber(state.filtered.length)} de ${formatNumber(state.raw.length)} registros (${percent}).`;
-}
+// --- HELPERS (RESTAURADOS) ---
 
 function parseDate(value) {
 if (!value) return null;
@@ -2367,112 +1943,57 @@ return parts[0];
 return null;
 }
 
-function setText(id, value) {
-const element = document.getElementById(id);
-if (element) element.textContent = value;
+function updateFilterChips() {
+if (!UI.filterChips) return;
+const chips = [];
+if (state.filters.start || state.filters.end) {
+const start = state.filters.start ? formatDate(new Date(`${state.filters.start}T00:00:00`)) : 'início';
+const end = state.filters.end ? formatDate(new Date(`${state.filters.end}T00:00:00`)) : 'fim';
+chips.push(`<span class="px-3 py-1 bg-teal-100 text-teal-700 rounded-full text-xs font-semibold">Período: ${escapeHtml(start)} → ${escapeHtml(end)}</span>`);
+}
+if (state.filters.statuses.length) chips.push(`<span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">Status: ${escapeHtml(state.filters.statuses.join(', '))}</span>`);
+if (state.filters.especialidades.length) chips.push(`<span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">Espec: ${state.filters.especialidades.length} selecionadas</span>`);
+if (state.filters.search) chips.push(`<span class="px-3 py-1 bg-sky-100 text-sky-700 rounded-full text-xs font-semibold">Busca: ${escapeHtml(state.filters.search)}</span>`);
+UI.filterChips.innerHTML = chips.length ? chips.join('') : '<span class="text-xs text-gray-500">Nenhum filtro.</span>';
 }
 
-function formatNumber(value) {
-return new Intl.NumberFormat('pt-BR').format(value || 0);
+function updateLastUpdate() {
+if (!UI.lastUpdate || !state.meta.fetchedAt) return;
+const percent = formatPercent(state.filtered.length, state.raw.length || 1);
+UI.lastUpdate.textContent = `Atualizado em ${formatDateTime(state.meta.fetchedAt)} • ${formatNumber(state.filtered.length)}/${formatNumber(state.raw.length)} (${percent}).`;
 }
 
-function formatDecimal(value, decimals = 1) {
-if (!Number.isFinite(value)) return '0,0';
-return value.toFixed(decimals).replace('.', ',');
-}
-
-function calcPercent(part, total) {
-if (!total) return 0;
-return (part / total) * 100;
-}
-
-function formatPercent(part, total) {
-return `${formatDecimal(calcPercent(part, total))}%`;
-}
-
-function formatDuration(days) {
-if (!Number.isFinite(days) || days <= 0) return 'N/D';
-if (days < 1) return `${formatDecimal(days * 24)}h`;
-return `${formatDecimal(days)} dias`;
-}
-
-function formatDate(date) {
-if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '-';
-return date.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-}
-
-function formatDateTime(date) {
-if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '-';
-return date.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Sao_Paulo' });
-}
-
-function toInputDate(date) {
-if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '';
-const local = new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
-return local.toISOString().split('T')[0];
-}
-
-function medianValue(values) {
-if (!values.length) return 0;
-const sorted = values.slice().sort((a, b) => a - b);
-const mid = Math.floor(sorted.length / 2);
-if (sorted.length % 2 === 0) return (sorted[mid - 1] + sorted[mid]) / 2;
-return sorted[mid];
-}
-
-function shiftDays(date, days) {
-const copy = new Date(date);
-copy.setDate(copy.getDate() - days);
-return copy;
-}
-function truncate(text, length) {
-if (!text) return '';
-if (text.length <= length) return text;
-return `${text.slice(0, length - 3)}...`;
-}
-
-function statusClass(status) {
-const normalized = normalize(status);
-if (normalized.includes('crit')) return 'status-chip bg-red-100 text-red-700';
-if (normalized.includes('aten')) return 'status-chip bg-yellow-100 text-yellow-700';
-if (normalized.includes('pend')) return 'status-chip bg-blue-100 text-blue-700';
-if (normalized.includes('neg')) return 'status-chip bg-gray-200 text-gray-700';
-if (normalized.includes('normal')) return 'status-chip bg-teal-100 text-teal-700';
+function setText(id, value) { const el = document.getElementById(id); if (el) el.textContent = value; }
+function formatNumber(v) { return new Intl.NumberFormat('pt-BR').format(v || 0); }
+function formatDecimal(v, d = 1) { return !Number.isFinite(v) ? '0,0' : v.toFixed(d).replace('.', ','); }
+function calcPercent(p, t) { return !t ? 0 : (p / t) * 100; }
+function formatPercent(p, t) { return `${formatDecimal(calcPercent(p, t))}%`; }
+function formatDuration(d) { if (!Number.isFinite(d) || d <= 0) return 'N/D'; return d < 1 ? `${formatDecimal(d * 24)}h` : `${formatDecimal(d)} dias`; }
+function formatDate(d) { return (!(d instanceof Date) || Number.isNaN(d.getTime())) ? '-' : d.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }); }
+function formatDateTime(d) { return (!(d instanceof Date) || Number.isNaN(d.getTime())) ? '-' : d.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Sao_Paulo' }); }
+function toInputDate(d) { if (!(d instanceof Date) || Number.isNaN(d.getTime())) return ''; const l = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)); return l.toISOString().split('T')[0]; }
+function medianValue(v) { if (!v.length) return 0; const s = v.slice().sort((a, b) => a - b); const m = Math.floor(s.length / 2); return s.length % 2 === 0 ? (s[m - 1] + s[m]) / 2 : s[m]; }
+function shiftDays(d, n) { const c = new Date(d); c.setDate(c.getDate() - n); return c; }
+function truncate(t, l) { if (!t) return ''; return t.length <= l ? t : `${t.slice(0, l - 3)}...`; }
+function statusClass(s) {
+const n = normalize(s);
+if (n.includes('crit')) return 'status-chip bg-red-100 text-red-700';
+if (n.includes('aten')) return 'status-chip bg-yellow-100 text-yellow-700';
+if (n.includes('pend')) return 'status-chip bg-blue-100 text-blue-700';
+if (n.includes('neg')) return 'status-chip bg-gray-200 text-gray-700';
+if (n.includes('normal')) return 'status-chip bg-teal-100 text-teal-700';
 return 'status-chip bg-green-100 text-green-700';
 }
-
-function normalize(text) {
-return String(text || '')
-.normalize('NFD')
-.replace(/[\u0300-\u036f]/g, '')
-.toLowerCase();
+function normalize(t) { return String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
+function escapeHtml(t) { return String(t || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+function escapeAttr(t) { return escapeHtml(t).replace(/`/g, '&#96;'); }
+function clearDebug() { if (UI.debugOutput) UI.debugOutput.innerHTML = ''; }
+function log(m) {
+const t = new Date().toLocaleTimeString();
+const e = `[${t}] ${m}`;
+console.log(e);
+if (UI.debugOutput) { UI.debugOutput.innerHTML += `${escapeHtml(e)}<br />`; UI.debugOutput.scrollTop = UI.debugOutput.scrollHeight; }
 }
-
-function escapeHtml(text) {
-return String(text || '')
-.replace(/&/g, '&amp;')
-.replace(/</g, '&lt;')
-.replace(/>/g, '&gt;')
-.replace(/"/g, '&quot;')
-.replace(/'/g, '&#39;');
-}
-
-function escapeAttr(text) {
-return escapeHtml(text).replace(/`/g, '&#96;');
-}
-
-function clearDebug() {
-if (UI.debugOutput) UI.debugOutput.innerHTML = '';
-}
-
-function log(message) {
-const time = new Date().toLocaleTimeString();
-const entry = `[${time}] ${message}`;
-console.log(entry);
-if (UI.debugOutput) {
-UI.debugOutput.innerHTML += `${escapeHtml(entry)}<br />`;
-UI.debugOutput.scrollTop = UI.debugOutput.scrollHeight;
-}
-}
-</script> </body>
+</script>
+</body>
 </html>
